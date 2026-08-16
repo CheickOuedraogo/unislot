@@ -1,26 +1,236 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@theme {
+  --color-on-background: #191c1d;
+  --color-on-secondary-container: #596373;
+  --color-inverse-surface: #2e3132;
+  --color-on-primary-fixed: #0f0069;
+  --color-surface-container: #edeeef;
+  --color-on-tertiary-fixed-variant: #7b2f00;
+  --color-tertiary-container: #a44100;
+  --color-surface-variant: #e1e3e4;
+  --color-on-error-container: #93000a;
+  --color-tertiary-fixed: #ffdbcc;
+  --color-error: #ba1a1a;
+  --color-success: #059669;
+  --color-on-success: #ffffff;
+  --color-on-surface-variant: #464555;
+  --color-secondary-container: #d6e0f3;
+  --color-on-secondary-fixed: #121c2a;
+  --color-tertiary: #7e3000;
+  --color-on-tertiary-container: #ffd2be;
+  --color-on-primary-fixed-variant: #3323cc;
+  --color-surface-container-high: #e7e8e9;
+  --color-on-primary-container: #dad7ff;
+  --color-primary-container: #4f46e5;
+  --color-surface-bright: #f8f9fa;
+  --color-on-tertiary-fixed: #351000;
+  --color-on-error: #ffffff;
+  --color-surface: #f8f9fa;
+  --color-inverse-primary: #c3c0ff;
+  --color-on-tertiary: #ffffff;
+  --color-surface-container-highest: #e1e3e4;
+  --color-primary-fixed: #e2dfff;
+  --color-surface-dim: #d9dadb;
+  --color-secondary-fixed-dim: #bdc7d9;
+  --color-primary: #3525cd;
+  --color-surface-container-lowest: #ffffff;
+  --color-secondary: #555f6f;
+  --color-error-container: #ffdad6;
+  --color-inverse-on-surface: #f0f1f2;
+  --color-on-primary: #ffffff;
+  --color-on-secondary: #ffffff;
+  --color-on-surface: #191c1d;
+  --color-secondary-fixed: #d9e3f6;
+  --color-on-secondary-fixed-variant: #3d4756;
+  --color-primary-fixed-dim: #c3c0ff;
+  --color-surface-tint: #4d44e3;
+  --color-background: #f8f9fa;
+  --color-tertiary-fixed-dim: #ffb695;
+  --color-outline-variant: #c7c4d8;
+  --color-surface-container-low: #f3f4f5;
+  --color-outline: #777587;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+
+  --container-max: 1280px;
+
+  --spacing-gutter: 16px;
+  --spacing-unit: 4px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 40px;
+  --spacing-grid-row-height: 80px;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-material-symbols: "Material Symbols Outlined", sans-serif;
+  --font-headline-lg: var(--font-inter), sans-serif;
+  --font-headline-md: var(--font-inter), sans-serif;
+  --font-body-sm: var(--font-inter), sans-serif;
+  --font-label-caps: var(--font-inter), sans-serif;
+  --font-headline-lg-mobile: var(--font-inter), sans-serif;
+  --font-display-time: var(--font-inter), sans-serif;
+  --font-body-lg: var(--font-inter), sans-serif;
+
+  --text-headline-lg: 30px;
+  --text-headline-lg--line-height: 36px;
+  --text-headline-lg--letter-spacing: -0.01em;
+  --text-headline-lg--font-weight: 600;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--font-weight: 600;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-body-sm--font-weight: 400;
+  --text-label-caps: 12px;
+  --text-label-caps--line-height: 16px;
+  --text-label-caps--letter-spacing: 0.05em;
+  --text-label-caps--font-weight: 600;
+  --text-headline-lg-mobile: 24px;
+  --text-headline-lg-mobile--line-height: 32px;
+  --text-headline-lg-mobile--font-weight: 600;
+  --text-display-time: 48px;
+  --text-display-time--line-height: 1.1;
+  --text-display-time--letter-spacing: -0.02em;
+  --text-display-time--font-weight: 700;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+button:not(:disabled),
+[role="button"]:not(:disabled),
+select:not(:disabled),
+label[for],
+a {
+  cursor: pointer;
+}
+
+.material-symbols-outlined {
+  font-family: var(--font-material-symbols), sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-variant);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline-variant);
+}
+
+.table-row-border {
+  border-bottom: 1px solid var(--color-surface-variant);
+}
+.table-row-border:last-child {
+  border-bottom: none;
+}
+
+.timetable-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(6, 1fr);
+  grid-template-rows: auto repeat(10, 80px);
+  gap: 1px;
+  background-color: var(--color-surface-container-low);
+}
+
+.time-label {
+  grid-column: 1;
+  text-align: right;
+  padding-right: 8px;
+  transform: translateY(-50%);
+  color: var(--color-outline);
+}
+
+.grid-cell {
+  background-color: var(--color-surface-container-lowest);
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.grid-cell:hover {
+  background-color: var(--color-surface);
+}
+
+.course-card {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  background-color: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-surface-variant);
+  border-radius: 2px;
+  padding: 8px;
+  overflow: hidden;
+  z-index: 10;
+}
+.course-card:hover {
+  border-color: var(--color-primary-container);
+}
+.course-type-cours {
+  border-left: 4px solid var(--color-primary);
+}
+.course-type-td {
+  border-left: 4px solid #059669;
+}
+.course-type-tp {
+  border-left: 4px solid #d97706;
+}
+.course-type-devoir {
+  border-left: 4px solid var(--color-error);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 2px;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.badge-cours {
+  background-color: var(--color-primary);
+}
+.badge-td {
+  background-color: #059669;
+}
+.badge-tp {
+  background-color: #d97706;
+}
+.badge-devoir {
+  background-color: var(--color-error);
+}
+
+.backdrop-blur-overlay {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.4);
 }
