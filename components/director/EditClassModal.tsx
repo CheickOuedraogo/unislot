@@ -6,6 +6,7 @@ import { EditModal } from "@/components/director/EditModal";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { updateClass } from "@/lib/actions/classes";
+import { LEVELS } from "@/lib/constants";
 import type { ActionResult } from "@/lib/actions/auth";
 import type { SchoolClass } from "@/lib/types";
 
@@ -62,12 +63,21 @@ export function EditClassModal({ schoolClass }: { schoolClass: SchoolClass }) {
             />
           </Field>
           <Field label="Niveau">
-            <input
-              type="text"
+            <select
+              required
               value={level}
               onChange={(e) => setLevel(e.target.value)}
               className={inputClassLg}
-            />
+            >
+              <option value="" disabled>
+                Niveau…
+              </option>
+              {LEVELS.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
           </Field>
         </EditModal>
       )}

@@ -48,7 +48,7 @@ export function CreateClassForm() {
         </select>
       </div>
       <div>
-        <Button disabled={pending}>
+        <Button type="submit" disabled={pending}>
           {pending ? "Création…" : "Créer la classe"}
         </Button>
       </div>

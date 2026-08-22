@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   first_name text NOT NULL DEFAULT '',
   last_name text NOT NULL DEFAULT '',
   is_active boolean NOT NULL DEFAULT true,
-  must_change_password boolean NOT NULL DEFAULT true,
+  must_change_password boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -24,6 +24,12 @@ CREATE TABLE IF NOT EXISTS classes (
 CREATE TABLE IF NOT EXISTS subjects (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   name text NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS class_subjects (
+  class_id uuid NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+  subject_id uuid NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+  PRIMARY KEY (class_id, subject_id)
 );
 
 CREATE TABLE IF NOT EXISTS teacher_subjects (
@@ -71,6 +77,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE INDEX IF NOT EXISTS idx_slots_class_day ON slots (class_id, day_of_week);
 CREATE INDEX IF NOT EXISTS idx_teacher_subjects_teacher ON teacher_subjects (teacher_id);
+CREATE INDEX IF NOT EXISTS idx_class_subjects_subject ON class_subjects (subject_id);
 CREATE INDEX IF NOT EXISTS idx_slot_professors_teacher ON slot_professors (teacher_id);
 CREATE INDEX IF NOT EXISTS idx_swap_requests_slot ON swap_requests (slot_id);
 CREATE INDEX IF NOT EXISTS idx_swap_requests_status ON swap_requests (status);

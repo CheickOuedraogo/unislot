@@ -21,7 +21,14 @@ export async function getClassesForUser(user: User): Promise<SchoolClass[]> {
 
 export async function getSubjectsForClass(user: User, classId: string): Promise<Subject[]> {
   if (user.role === "director") {
-    const { rows } = await db.query<Subject>("SELECT id, name FROM subjects ORDER BY name");
+    const { rows } = await db.query<Subject>(
+      `SELECT su.id, su.name
+       FROM class_subjects cs
+       JOIN subjects su ON su.id = cs.subject_id
+       WHERE cs.class_id = $1
+       ORDER BY su.name`,
+      [classId]
+    );
     return rows;
   }
   const { rows } = await db.query<Subject>(
@@ -88,6 +95,45 @@ export async function getAllTeachers(): Promise<Teacher[]> {
   return rows;
 }
 
+export async function getTeacherById(userId: string): Promise<
+  | (Teacher & {
+      assignments: {
+        id: string;
+        subjectName: string;
+        className: string;
+        level: string;
+      }[];
+    })
+  | null
+> {
+  const { rows } = await db.query<Teacher>(
+    "SELECT id, name, email, first_name, last_name, is_active FROM users WHERE id = $1 AND role = 'teacher'",
+    [userId]
+  );
+  const teacher = rows[0];
+  if (!teacher) return null;
+
+  const { rows: assignmentRows } = await db.query(
+    `SELECT ts.id, su.name AS subject_name, c.name AS class_name, c.level
+     FROM teacher_subjects ts
+     JOIN subjects su ON su.id = ts.subject_id
+     JOIN classes c ON c.id = ts.class_id
+     WHERE ts.teacher_id = $1
+     ORDER BY c.name, su.name`,
+    [userId]
+  );
+
+  return {
+    ...teacher,
+    assignments: assignmentRows.map((r) => ({
+      id: r.id,
+      subjectName: r.subject_name,
+      className: r.class_name,
+      level: r.level,
+    })),
+  };
+}
+
 export async function getAllClasses(): Promise<SchoolClass[]> {
   const { rows } = await db.query<SchoolClass>(
     "SELECT id, name, level FROM classes ORDER BY name"
@@ -111,8 +157,8 @@ export async function getClassesWithStats(): Promise<ClassWithStats[]> {
     subject_count: number;
     teacher_count: number;
   }>(
-    `SELECT c.id, c.name, c.level,
-       (SELECT count(DISTINCT ts.subject_id) FROM teacher_subjects ts WHERE ts.class_id = c.id) AS subject_count,
+     `SELECT c.id, c.name, c.level,
+       (SELECT count(*) FROM class_subjects cs WHERE cs.class_id = c.id) AS subject_count,
        (SELECT count(DISTINCT ts.teacher_id) FROM teacher_subjects ts WHERE ts.class_id = c.id) AS teacher_count
      FROM classes c
      ORDER BY c.name`
@@ -126,15 +172,10 @@ export async function getClassesWithStats(): Promise<ClassWithStats[]> {
   }));
 }
 
-export async function getAllSubjects(): Promise<Subject[]> {
-  const { rows } = await db.query<Subject>("SELECT id, name FROM subjects ORDER BY name");
-  return rows;
-}
-
 export async function getAllAssignments(): Promise<TeacherSubject[]> {
   const { rows } = await db.query<TeacherSubject>(
     `SELECT ts.id, ts.teacher_id, ts.subject_id, ts.class_id,
-            u.name AS teacher_name, su.name AS subject_name, c.name AS class_name
+            u.name AS teacher_name, su.name AS subject_name, c.name AS class_name, c.level AS class_level
      FROM teacher_subjects ts
      JOIN users u ON u.id = ts.teacher_id
      JOIN subjects su ON su.id = ts.subject_id
@@ -235,4 +276,97 @@ export async function getTeacherStats(userId: string): Promise<TeacherStats> {
     subjects: subjectRows.map((r) => ({ subject: r.subject, hours: Number(r.hours) })),
     classes: classRows.map((r) => ({ className: r.class_name, hours: Number(r.hours) })),
   };
+}
+
+export async function getClassById(classId: string): Promise<SchoolClass | null> {
+  const { rows } = await db.query<SchoolClass>(
+    "SELECT id, name, level FROM classes WHERE id = $1",
+    [classId]
+  );
+  return rows[0] ?? null;
+}
+
+export type ClassSubjectDetail = {
+  subjectId: string;
+  name: string;
+  teachers: { assignmentId: string; teacherId: string; teacherName: string }[];
+};
+
+export async function getSubjectsOfClass(
+  classId: string
+): Promise<ClassSubjectDetail[]> {
+  const { rows } = await db.query<{ subject_id: string; name: string }>(
+    `SELECT cs.subject_id, su.name
+     FROM class_subjects cs
+     JOIN subjects su ON su.id = cs.subject_id
+     WHERE cs.class_id = $1
+     ORDER BY su.name`,
+    [classId]
+  );
+
+  const { rows: teacherRows } = await db.query<{
+    subject_id: string;
+    assignment_id: string;
+    teacher_id: string;
+    teacher_name: string;
+  }>(
+    `SELECT ts.subject_id, ts.id AS assignment_id, u.id AS teacher_id, u.name AS teacher_name
+     FROM teacher_subjects ts
+     JOIN users u ON u.id = ts.teacher_id
+     WHERE ts.class_id = $1
+     ORDER BY u.name`,
+    [classId]
+  );
+
+  const bySubject = new Map<string, ClassSubjectDetail>();
+  for (const r of rows) {
+    bySubject.set(r.subject_id, { subjectId: r.subject_id, name: r.name, teachers: [] });
+  }
+  for (const t of teacherRows) {
+    bySubject.get(t.subject_id)?.teachers.push({
+      assignmentId: t.assignment_id,
+      teacherId: t.teacher_id,
+      teacherName: t.teacher_name,
+    });
+  }
+  return [...bySubject.values()];
+}
+
+export async function getAvailableSubjectsForClass(
+  classId: string
+): Promise<Subject[]> {
+  const { rows } = await db.query<Subject>(
+    `SELECT su.id, su.name
+     FROM subjects su
+     WHERE NOT EXISTS (
+       SELECT 1 FROM class_subjects cs WHERE cs.class_id = $1 AND cs.subject_id = su.id
+     )
+     ORDER BY su.name`,
+    [classId]
+  );
+  return rows;
+}
+
+export type ClassSubjectPair = {
+  classId: string;
+  subjectId: string;
+  name: string;
+};
+
+export async function getAllClassSubjects(): Promise<ClassSubjectPair[]> {
+  const { rows } = await db.query<{
+    class_id: string;
+    subject_id: string;
+    name: string;
+  }>(
+    `SELECT cs.class_id, cs.subject_id, su.name
+     FROM class_subjects cs
+     JOIN subjects su ON su.id = cs.subject_id
+     ORDER BY su.name`
+  );
+  return rows.map((r) => ({
+    classId: r.class_id,
+    subjectId: r.subject_id,
+    name: r.name,
+  }));
 }

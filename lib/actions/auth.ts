@@ -14,7 +14,6 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import {
-  DEFAULT_TEACHER_PASSWORD,
   SESSION_COOKIE,
   SESSION_DURATION_DAYS,
 } from "@/lib/constants";
@@ -34,20 +33,11 @@ function validateNewPassword(next: string, confirm: string): string | null {
 
 async function changeUserPassword(
   user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
-  current: string,
   next: string,
   confirm: string
 ): Promise<ActionResult> {
   const error = validateNewPassword(next, confirm);
   if (error) return { error };
-
-  const { rows } = await db.query<{ password_hash: string }>(
-    "SELECT password_hash FROM users WHERE id = $1",
-    [user.id]
-  );
-  if (!rows[0] || !(await verifyPassword(current, rows[0].password_hash))) {
-    return { error: "Mot de passe actuel incorrect." };
-  }
 
   const passwordHash = await hashPassword(next);
   await db.query(
@@ -96,7 +86,7 @@ export async function login(
     maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
   });
 
-  redirect(user.must_change_password ? "/auth/change-password" : roleHome(user));
+  redirect(roleHome(user));
 }
 
 export async function logout(): Promise<void> {
@@ -109,23 +99,6 @@ export async function logout(): Promise<void> {
   redirect("/login");
 }
 
-export async function changePassword(
-  _state: ActionResult,
-  formData: FormData
-): Promise<ActionResult> {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
-  const current = String(formData.get("current") ?? "");
-  const next = String(formData.get("password") ?? "");
-  const confirm = String(formData.get("confirm") ?? "");
-
-  const result = await changeUserPassword(user, current, next, confirm);
-  if (result.error) return result;
-
-  redirect(roleHome(user));
-}
-
 export async function createTeacherAccount(
   _state: ActionResult,
   formData: FormData
@@ -135,21 +108,53 @@ export async function createTeacherAccount(
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
 
-  if (!firstName || !lastName) return { error: "Prénom et nom requis." };
+  if (!firstName || !lastName) return { error: "Nom et prénom requis." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Email invalide." };
+  if (!password || password.length < MIN_PASSWORD_LENGTH) {
+    return {
+      error: `Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`,
+    };
+  }
 
   const { rowCount } = await db.query("SELECT 1 FROM users WHERE email = $1", [email]);
   if (rowCount) return { error: "Un compte avec cet email existe déjà." };
 
-  const name = `${firstName} ${lastName}`.trim();
-  const passwordHash = await hashPassword(DEFAULT_TEACHER_PASSWORD);
+  const name = `${lastName} ${firstName}`.trim();
+  const passwordHash = await hashPassword(password);
   await db.query(
-    "INSERT INTO users (name, email, password_hash, role, first_name, last_name, must_change_password) VALUES ($1, $2, $3, 'teacher', $4, $5, true)",
+    "INSERT INTO users (name, email, password_hash, role, first_name, last_name, must_change_password) VALUES ($1, $2, $3, 'teacher', $4, $5, false)",
     [name, email, passwordHash, firstName, lastName]
   );
   revalidatePaths(["/director", "/director/teachers"]);
-  return { success: `Compte créé. Mot de passe par défaut : ${DEFAULT_TEACHER_PASSWORD}` };
+  return { success: "Compte enseignant créé." };
+}
+
+export async function updateTeacherPassword(
+  _state: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireRole("director");
+
+  const userId = String(formData.get("userId") ?? "");
+  const password = String(formData.get("password") ?? "");
+
+  if (!userId) return { error: "Enseignant introuvable." };
+  if (!password || password.length < MIN_PASSWORD_LENGTH) {
+    return {
+      error: `Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`,
+    };
+  }
+
+  const passwordHash = await hashPassword(password);
+  const { rowCount } = await db.query(
+    "UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2 AND role = 'teacher'",
+    [passwordHash, userId]
+  );
+  if (!rowCount) return { error: "Enseignant introuvable." };
+  revalidatePaths(["/director", `/director/teachers/${userId}`]);
+  return { success: "Mot de passe mis à jour." };
 }
 
 export async function deleteTeacher(userId: string): Promise<ActionResult> {
@@ -176,7 +181,7 @@ export async function updateProfile(
   const lastName = String(formData.get("lastName") ?? "").trim();
   if (!firstName || !lastName) return { error: "Prénom et nom requis." };
 
-  const name = `${firstName} ${lastName}`.trim();
+  const name = `${lastName} ${firstName}`.trim();
   await db.query(
     "UPDATE users SET name = $1, first_name = $2, last_name = $3 WHERE id = $4",
     [name, firstName, lastName, user.id]
@@ -190,11 +195,36 @@ export async function updatePassword(
   formData: FormData
 ): Promise<ActionResult> {
   const user = await requireUser();
-  const current = String(formData.get("current") ?? "");
   const next = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
 
-  return changeUserPassword(user, current, next, confirm);
+  const result = await changeUserPassword(user, next, confirm);
+  if (!result.error) result.success = "Mot de passe mis à jour.";
+  return result;
+}
+
+export async function updateTeacherAccount(
+  _state: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireRole("director");
+
+  const userId = String(formData.get("userId") ?? "");
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+
+  if (!userId) return { error: "Enseignant introuvable." };
+  if (!firstName || !lastName) return { error: "Prénom et nom requis." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Email invalide." };
+
+  const { rowCount } = await db.query(
+    "UPDATE users SET name = $1, email = $2, first_name = $3, last_name = $4 WHERE id = $5 AND role = 'teacher'",
+    [`${lastName} ${firstName}`.trim(), email, firstName, lastName, userId]
+  );
+  if (!rowCount) return { error: "Enseignant introuvable." };
+  revalidatePaths(["/director", "/director/teachers", `/director/teachers/${userId}`]);
+  return { success: "Enseignant mis à jour." };
 }
 
 export async function setTeacherActive(

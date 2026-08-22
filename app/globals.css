@@ -2,6 +2,14 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@font-face {
+  font-family: "Material Symbols Outlined";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url("/fonts/material-symbols-outlined.woff2") format("woff2");
+}
+
 @theme {
   --color-on-background: #191c1d;
   --color-on-secondary-container: #596373;
@@ -65,15 +73,17 @@
   --spacing-margin-desktop: 40px;
   --spacing-grid-row-height: 80px;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-material-symbols: "Material Symbols Outlined", sans-serif;
-  --font-headline-lg: var(--font-inter), sans-serif;
-  --font-headline-md: var(--font-inter), sans-serif;
-  --font-body-sm: var(--font-inter), sans-serif;
-  --font-label-caps: var(--font-inter), sans-serif;
-  --font-headline-lg-mobile: var(--font-inter), sans-serif;
-  --font-display-time: var(--font-inter), sans-serif;
-  --font-body-lg: var(--font-inter), sans-serif;
+  --font-headline-lg: var(--font-sans);
+  --font-headline-md: var(--font-sans);
+  --font-body-sm: var(--font-sans);
+  --font-label-caps: var(--font-sans);
+  --font-headline-lg-mobile: var(--font-sans);
+  --font-display-time: var(--font-sans);
+  --font-body-lg: var(--font-sans);
 
   --text-headline-lg: 30px;
   --text-headline-lg--line-height: 36px;
@@ -104,7 +114,7 @@
 body {
   background-color: var(--color-background);
   color: var(--color-on-background);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 button:not(:disabled),
@@ -233,4 +243,61 @@ a {
 .backdrop-blur-overlay {
   backdrop-filter: blur(8px);
   background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ---- Tableau : défilement horizontal sur petits écrans ---- */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-wrap table {
+  min-width: 560px;
+}
+
+/* ---- Selects : chevron + focus cohérents ---- */
+select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="time"],
+textarea {
+  appearance: none;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555f6f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 16px 16px;
+  padding-right: 2.4rem;
+}
+select:has(option[value=""]:checked) {
+  color: var(--color-secondary);
+}
+
+/* ---- Focus visible accessible ---- */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ---- Transition de thème douce ---- */
+body,
+.card {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* ---- Petite ombre "flottante" pour les cartes ---- */
+.card {
+  box-shadow: 0 1px 2px rgba(25, 28, 29, 0.04);
+}
+
+/* ---- Rangées de tableau interactives ---- */
+tbody tr {
+  transition: background-color 0.12s ease;
+}
+tbody tr:hover {
+  background-color: var(--color-surface-container-low);
 }

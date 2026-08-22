@@ -42,7 +42,6 @@ export const courseTypeCardClass: Record<CourseType, string> = {
   devoir: "course-card course-type-devoir flex flex-col group",
 };
 
-export const DEFAULT_TEACHER_PASSWORD = "Ecole123!";
 export const SESSION_COOKIE = "unislot_session";
 export const SESSION_DURATION_DAYS = 30;
 

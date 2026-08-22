@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { db, transaction } from "@/lib/db";
+import { revalidatePaths } from "@/lib/revalidate";
 import { requireUser } from "@/lib/auth";
 import type { SwapRequest } from "@/lib/types";
 import type { ActionResult } from "./auth";
@@ -47,7 +47,7 @@ export async function createSwapRequest(input: SwapRequestInput): Promise<Action
      VALUES ($1, $2, $3, $4)`,
     [slotId, user.id, message.trim(), proposedSubjectId]
   );
-  revalidatePath("/timetable");
+  revalidatePaths(["/timetable", "/teacher"]);
   return { success: "Demande envoyée." };
 }
 
@@ -123,7 +123,7 @@ export async function approveSwapRequest(requestId: string): Promise<ActionResul
 
   if (alreadyDecided) return { error: "Cette demande n'est plus en attente." };
 
-  revalidatePath("/timetable");
+  revalidatePaths(["/timetable", "/teacher"]);
   return { success: "Demande approuvée : le créneau a changé de propriétaire et de matière." };
 }
 
@@ -137,7 +137,7 @@ export async function rejectSwapRequest(requestId: string): Promise<ActionResult
   );
   if (!rowCount) return { error: "Cette demande n'est plus en attente." };
 
-  revalidatePath("/timetable");
+  revalidatePaths(["/timetable", "/teacher"]);
   return { success: "Demande refusée." };
 }
 
