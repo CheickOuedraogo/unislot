@@ -45,7 +45,7 @@ async function seed(db) {
 
   await db.query(
     `INSERT INTO users (name, email, password_hash, role, must_change_password)
-     VALUES ($1, $2, $3, 'director', true)`,
+     VALUES ($1, $2, $3, 'director', false)`,
     ["Directeur", DIRECTOR_EMAIL, hashPassword(DEFAULT_PASSWORD)]
   );
 
@@ -58,7 +58,7 @@ async function seed(db) {
   for (const [name, email] of teacherRows) {
     const { rows } = await db.query(
       `INSERT INTO users (name, email, password_hash, role, must_change_password)
-       VALUES ($1, $2, $3, 'teacher', true)
+       VALUES ($1, $2, $3, 'teacher', false)
        RETURNING id`,
       [name, email, hashPassword(DEFAULT_PASSWORD)]
     );
@@ -90,6 +90,15 @@ async function seed(db) {
     ["Pr Traoré", "Physique", "Mathématiques"],
     ["Dr. Smith", "Bases de données", "Data Science"],
   ];
+  const pairs = new Set(assignments.map(([, subject, cls]) => `${subject}|${cls}`));
+  for (const pair of pairs) {
+    const [subject, cls] = pair.split("|");
+    await db.query(
+      `INSERT INTO class_subjects (class_id, subject_id) VALUES ($1, $2)`,
+      [classIds[cls], subjectIds[subject]]
+    );
+  }
+
   for (const [teacher, subject, cls] of assignments) {
     await db.query(
       `INSERT INTO teacher_subjects (teacher_id, subject_id, class_id)
@@ -184,7 +193,7 @@ async function seed(db) {
   }
 
   console.log(
-    `Seed OK — directeur: ${DIRECTOR_EMAIL} / ${DEFAULT_PASSWORD} (mot de passe à changer)`
+    `Seed OK — directeur: ${DIRECTOR_EMAIL} / ${DEFAULT_PASSWORD}`
   );
 }
 

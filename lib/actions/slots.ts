@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { db, transaction, type TransactionClient } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { minutesOfDay } from "@/lib/utils";
+import { revalidatePaths } from "@/lib/revalidate";
 import type { CourseType, User } from "@/lib/types";
 import type { ActionResult } from "./auth";
 
@@ -127,7 +127,7 @@ export async function createSlot(input: SlotInput): Promise<ActionResult> {
     return { error: "Impossible de créer le créneau. Veuillez réessayer." };
   }
 
-  revalidatePath("/timetable");
+  revalidatePaths(["/timetable", "/teacher"]);
   return { success: "Créneau créé." };
 }
 
@@ -157,7 +157,7 @@ export async function updateSlot(slotId: string, input: SlotInput): Promise<Acti
     return { error: "Impossible de modifier le créneau. Veuillez réessayer." };
   }
 
-  revalidatePath("/timetable");
+  revalidatePaths(["/timetable", "/teacher"]);
   return { success: "Créneau modifié." };
 }
 
@@ -166,6 +166,6 @@ export async function deleteSlot(slotId: string): Promise<ActionResult> {
   const editError = await assertSlotEditable(user, slotId);
   if (editError) return { error: editError };
   await db.query("DELETE FROM slots WHERE id = $1", [slotId]);
-  revalidatePath("/timetable");
+  revalidatePaths(["/timetable", "/teacher"]);
   return { success: "Créneau supprimé." };
 }

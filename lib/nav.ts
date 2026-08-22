@@ -6,14 +6,11 @@ const BASE_NAV: Record<Role, Omit<NavItem, "active">[]> = {
     { label: "Tableau de bord", href: "/director" },
     { label: "Enseignants", href: "/director/teachers" },
     { label: "Classes", href: "/director/classes" },
-    { label: "Matières", href: "/director/subjects" },
-    { label: "Assignations", href: "/director/assignments" },
     { label: "Emploi du temps", href: "/timetable" },
     { label: "Profil", href: "/profile" },
   ],
   teacher: [
     { label: "Tableau de bord", href: "/teacher" },
-    { label: "Mon emploi du temps", href: "/timetable" },
     { label: "Profil", href: "/profile" },
   ],
 };

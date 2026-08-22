@@ -5,6 +5,7 @@ import { login, type ActionResult } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Field, inputClass } from "@/components/ui/Field";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 export function LoginForm() {
   const [state, action, pending] = useActionState<ActionResult, FormData>(
@@ -25,12 +26,11 @@ export function LoginForm() {
         />
       </Field>
       <Field label="Mot de passe">
-        <input
+        <PasswordInput
           name="password"
-          type="password"
           required
           autoComplete="current-password"
-          className={inputClass}
+          inputClassName={inputClass}
         />
       </Field>
       <Button type="submit" disabled={pending} className="w-full justify-center">

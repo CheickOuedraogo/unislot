@@ -25,6 +25,14 @@ export async function createAssignment(input: AssignmentInput): Promise<ActionRe
   if (error) return { error };
 
   const { teacherId, subjectId, classId } = input;
+  const { rowCount: subjectInClass } = await db.query(
+    "SELECT 1 FROM class_subjects WHERE class_id = $1 AND subject_id = $2",
+    [classId, subjectId]
+  );
+  if (!subjectInClass) {
+    return { error: "Cette matière n'appartient pas à cette classe." };
+  }
+
   const { rowCount } = await db.query(
     "SELECT 1 FROM teacher_subjects WHERE teacher_id = $1 AND subject_id = $2 AND class_id = $3",
     [teacherId, subjectId, classId]
@@ -35,7 +43,7 @@ export async function createAssignment(input: AssignmentInput): Promise<ActionRe
     "INSERT INTO teacher_subjects (teacher_id, subject_id, class_id) VALUES ($1, $2, $3)",
     [teacherId, subjectId, classId]
   );
-  revalidatePaths(["/director/assignments"]);
+  revalidatePaths(["/director", "/director/classes", "/teacher"]);
   return { success: "Assignation créée." };
 }
 
@@ -58,13 +66,13 @@ export async function updateAssignment(
     "UPDATE teacher_subjects SET teacher_id = $1, subject_id = $2, class_id = $3 WHERE id = $4",
     [teacherId, subjectId, classId, assignmentId]
   );
-  revalidatePaths(["/director/assignments"]);
+  revalidatePaths(["/director", "/director/classes", "/teacher"]);
   return { success: "Assignation modifiée." };
 }
 
 export async function deleteAssignment(assignmentId: string): Promise<ActionResult> {
   await requireRole("director");
   await db.query("DELETE FROM teacher_subjects WHERE id = $1", [assignmentId]);
-  revalidatePaths(["/director/assignments"]);
+  revalidatePaths(["/director", "/director/classes", "/teacher"]);
   return { success: "Assignation supprimée." };
 }

@@ -103,8 +103,8 @@ export function TimetableGrid({
   };
 
   return (
-    <div className="p-4 flex-1 overflow-y-auto">
-      <div className="max-w-container-max mx-auto bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+    <div className="p-4 flex-1 overflow-x-auto overflow-y-auto">
+      <div className="min-w-[720px] max-w-container-max mx-auto bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
         <div className="timetable-grid">
           <div className="bg-surface border-b border-r border-outline-variant" />
           {weekDays.map((day, col) => (

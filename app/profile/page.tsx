@@ -26,7 +26,6 @@ export default async function ProfilePage() {
       <ProfileForm
         firstName={user.first_name}
         lastName={user.last_name}
-        email={user.email}
         role={user.role}
       />
     </AppShell>

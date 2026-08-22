@@ -37,7 +37,7 @@ export default async function DirectorPage() {
     >
       <section className="flex flex-col gap-1">
         <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-background">
-          Bonjour, {user.name.split(" ")[0]}
+          Bonjour, {user.first_name || user.name}
         </h1>
         <p className="font-body-sm text-body-sm text-secondary capitalize">
           {todayLabel()}
@@ -65,7 +65,7 @@ export default async function DirectorPage() {
           label="Matières"
           value={stats.subjects}
           icon="menu_book"
-          href="/director/subjects"
+          href="/director/classes"
           chipClass="bg-error/10"
           iconClass="text-error"
         />
@@ -107,7 +107,12 @@ export default async function DirectorPage() {
                         </span>
                       )}
                       <h3 className="font-headline-md text-headline-md text-on-surface truncate">
-                        {c.name}
+                        <Link
+                          href={`/director/classes/${c.id}`}
+                          className="hover:text-primary transition-colors"
+                        >
+                          {c.name}
+                        </Link>
                       </h3>
                     </div>
                     <Link

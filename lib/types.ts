@@ -30,6 +30,7 @@ export type Teacher = {
 export type Subject = {
   id: string;
   name: string;
+  usage_count?: number;
 };
 
 export type TeacherSubject = {
@@ -40,6 +41,7 @@ export type TeacherSubject = {
   teacher_name: string;
   subject_name: string;
   class_name: string;
+  class_level?: string;
 };
 
 export type CourseType = "cours" | "td" | "tp" | "devoir";

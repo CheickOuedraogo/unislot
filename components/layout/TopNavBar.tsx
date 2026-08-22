@@ -3,7 +3,6 @@ import { Icon } from "@/components/ui/Icon";
 import { NotificationsBell } from "./NotificationsBell";
 import { MobileNav } from "./MobileNav";
 import { logout } from "@/lib/actions/auth";
-import { ROLE_LABELS } from "@/lib/constants";
 import type { Role } from "@/lib/types";
 
 export type NavItem = {
@@ -22,7 +21,7 @@ export function TopNavBar({ navItems, user, children }: TopNavBarProps) {
   return (
     <header className="bg-surface-container-lowest dark:bg-on-background border-b border-outline-variant dark:border-outline sticky top-0 z-50 shrink-0">
       <div className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto h-grid-row-height">
-        <div className="flex items-center gap-gutter">
+        <div className="flex items-center gap-gutter min-w-0">
           <nav className="hidden md:flex gap-unit items-center h-full">
             {navItems.map((item) => (
               <Link
@@ -42,20 +41,6 @@ export function TopNavBar({ navItems, user, children }: TopNavBarProps) {
 
         <div className="flex items-center gap-gutter">
           {user && <NotificationsBell />}
-          {user && (
-            <Link
-              href="/profile"
-              className="hidden sm:flex flex-col items-end leading-tight hover:opacity-80 transition-opacity"
-              aria-label="Mon profil"
-            >
-              <span className="font-body-sm text-body-sm font-semibold text-on-surface">
-                {user.name}
-              </span>
-              <span className="font-label-caps text-label-caps text-secondary">
-                {ROLE_LABELS[user.role]}
-              </span>
-            </Link>
-          )}
           {user && (
             <form action={logout}>
               <button

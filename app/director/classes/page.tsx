@@ -1,11 +1,9 @@
 import { requireRole } from "@/lib/auth";
 import { getAllClasses } from "@/lib/queries";
-import { deleteClass } from "@/lib/actions/classes";
 import { navItemsFor } from "@/lib/nav";
 import { AppShell } from "@/components/layout/AppShell";
 import { CreateClassForm } from "@/components/director/CreateClassForm";
-import { DeleteActionButton } from "@/components/director/DeleteActionButton";
-import { EditClassModal } from "@/components/director/EditClassModal";
+import { ClassCard } from "@/components/director/ClassCard";
 
 export default async function ClassesPage() {
   const user = await requireRole("director");
@@ -26,6 +24,9 @@ export default async function ClassesPage() {
         <h2 className="font-title-md text-title-md text-on-surface">
           Liste des classes ({classes.length})
         </h2>
+        <p className="font-body-sm text-body-sm -mt-2 text-secondary">
+          Cliquez sur une classe pour gérer ses matières et ses enseignants.
+        </p>
         {classes.length === 0 ? (
           <p className="font-body-sm text-body-sm text-secondary">
             Aucune classe. Créez la première ci-dessus.
@@ -33,29 +34,7 @@ export default async function ClassesPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {classes.map((c) => (
-              <div
-                key={c.id}
-                className="card flex items-center justify-between p-5"
-              >
-                <div className="flex flex-col">
-                  <span className="font-title-md text-title-md text-on-surface">
-                    {c.name}
-                  </span>
-                  {c.level && (
-                    <span className="font-label-caps text-label-caps text-secondary uppercase">
-                      {c.level}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  <EditClassModal schoolClass={c} />
-                  <DeleteActionButton
-                    id={c.id}
-                    action={deleteClass}
-                    label={`Supprimer ${c.name}`}
-                  />
-                </div>
-              </div>
+              <ClassCard key={c.id} schoolClass={c} />
             ))}
           </div>
         )}

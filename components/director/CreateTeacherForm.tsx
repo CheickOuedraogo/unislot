@@ -3,10 +3,10 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { inputClassLg } from "@/components/ui/Field";
+import { Field, inputClassLg } from "@/components/ui/Field";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { createTeacherAccount } from "@/lib/actions/auth";
 import type { ActionResult } from "@/lib/actions/auth";
-import { DEFAULT_TEACHER_PASSWORD } from "@/lib/constants";
 
 export function CreateTeacherForm() {
   const [state, action, pending] = useActionState<ActionResult, FormData>(
@@ -25,36 +25,50 @@ export function CreateTeacherForm() {
       <Alert state={state} />
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-4">
-          <input
-            name="firstName"
-            type="text"
-            required
-            placeholder="Prénom"
-            className={inputClassLg}
-          />
-          <input
-            name="lastName"
-            type="text"
-            required
-            placeholder="Nom"
-            className={inputClassLg}
-          />
+          <Field label="Nom">
+            <input
+              name="lastName"
+              type="text"
+              required
+              placeholder="Dr. Ouedraogo"
+              className={inputClassLg}
+            />
+          </Field>
+          <Field label="Prénom">
+            <input
+              name="firstName"
+              type="text"
+              required
+              placeholder="Paul"
+              className={inputClassLg}
+            />
+          </Field>
         </div>
-        <input
-          name="email"
-          type="email"
-          required
-          placeholder="Adresse email"
-          className={inputClassLg}
-        />
+        <div className="grid gap-4">
+          <Field label="Adresse email">
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="Ex. paul@ujkz.com"
+              className={inputClassLg}
+            />
+          </Field>
+          <Field label="Mot de passe (min. 8 caractères)">
+            <PasswordInput
+              name="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              placeholder="Choisir un mot de passe"
+            />
+          </Field>
+        </div>
       </div>
-      <div className="flex items-center gap-4">
-        <Button disabled={pending}>
+      <div>
+        <Button type="submit" disabled={pending}>
           {pending ? "Création…" : "Créer le compte"}
         </Button>
-        <span className="font-body-sm text-body-sm text-secondary">
-          Mot de passe par défaut : <strong>{DEFAULT_TEACHER_PASSWORD}</strong>
-        </span>
       </div>
     </form>
   );

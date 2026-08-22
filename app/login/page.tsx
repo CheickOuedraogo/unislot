@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Connexion" };
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
-  if (user) redirect(user.must_change_password ? "/auth/change-password" : roleHome(user));
+  if (user) redirect(roleHome(user));
 
   return (
     <main className="flex-1 flex items-center justify-center px-margin-mobile">

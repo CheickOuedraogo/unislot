@@ -7,16 +7,22 @@ type WeekNavigatorProps = {
   weekStart: string;
   classId: string;
   label: string;
+  basePath?: string;
 };
 
-export function WeekNavigator({ weekStart, classId, label }: WeekNavigatorProps) {
+export function WeekNavigator({
+  weekStart,
+  classId,
+  label,
+  basePath = "/timetable",
+}: WeekNavigatorProps) {
   const router = useRouter();
 
   const go = (days: number) => {
     const base = new Date(`${weekStart}T00:00:00`);
     if (Number.isNaN(base.getTime())) return;
     base.setDate(base.getDate() + days);
-    router.push(`/timetable?class=${classId}&week=${base.toISOString().slice(0, 10)}`);
+    router.push(`${basePath}?class=${classId}&week=${base.toISOString().slice(0, 10)}`);
   };
 
   return (
