@@ -1,57 +1,76 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { inputClassLg } from "@/components/ui/Field";
+import { Field, inputClassLg } from "@/components/ui/Field";
 import { createClass } from "@/lib/actions/classes";
 import type { ActionResult } from "@/lib/actions/auth";
-import { LEVELS } from "@/lib/constants";
 
 export function CreateClassForm() {
-  const [state, action, pending] = useActionState<ActionResult, FormData>(
-    createClass,
-    {}
-  );
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [state, setState] = useState<ActionResult>({});
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+
+  const submit = () => {
+    startTransition(async () => {
+      const res = await createClass(name);
+      setState(res);
+      if (!res.error) {
+        setOpen(false);
+        setName("");
+        router.refresh();
+      }
+    });
+  };
 
   return (
-    <form
-      action={action}
-      className="flex flex-col gap-4 border border-outline-variant rounded-xl bg-surface-container-lowest p-5"
-    >
-      <h2 className="font-title-md text-title-md text-on-surface">
-        Nouvelle classe
-      </h2>
-      <Alert state={state} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <input
-          name="name"
-          type="text"
-          required
-          placeholder="Nom de la classe"
-          className={inputClassLg}
-        />
-        <select
-          name="level"
-          required
-          defaultValue=""
-          className={inputClassLg}
-        >
-          <option value="" disabled>
-            Niveau…
-          </option>
-          {LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </div>
+    <>
       <div>
-        <Button type="submit" disabled={pending}>
-          {pending ? "Création…" : "Créer la classe"}
+        <Button icon="add" onClick={() => setOpen(true)}>
+          Ajouter une classe
         </Button>
       </div>
-    </form>
+      {open && (
+        <Modal
+          title="Nouvelle classe"
+          onClose={() => setOpen(false)}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={submit} disabled={pending}>
+                {pending ? "Création…" : "Créer la classe"}
+              </Button>
+            </>
+          }
+        >
+          <Alert state={state} />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit();
+            }}
+            className="flex flex-col gap-4"
+          >
+            <Field label="Nom de la classe">
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex. Mathe L1"
+                className={inputClassLg}
+              />
+            </Field>
+          </form>
+        </Modal>
+      )}
+    </>
   );
 }

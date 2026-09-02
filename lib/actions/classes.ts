@@ -5,33 +5,26 @@ import { requireRole } from "@/lib/auth";
 import { revalidatePaths } from "@/lib/revalidate";
 import type { ActionResult } from "./auth";
 
-export async function createClass(
-  _state: ActionResult,
-  formData: FormData
-): Promise<ActionResult> {
+export async function createClass(name: string): Promise<ActionResult> {
   await requireRole("director");
-  const name = String(formData.get("name") ?? "").trim();
-  const level = String(formData.get("level") ?? "").trim();
-  if (!name) return { error: "Le nom de la classe est requis." };
+  const cleanName = name.trim();
+  if (!cleanName) return { error: "Le nom de la classe est requis." };
 
-  await db.query("INSERT INTO classes (name, level) VALUES ($1, $2)", [name, level]);
+  await db.query("INSERT INTO classes (name, level) VALUES ($1, '')", [cleanName]);
   revalidatePaths(["/director", "/director/classes"]);
   return { success: "Classe créée." };
 }
 
 export async function updateClass(
   classId: string,
-  name: string,
-  level: string
+  name: string
 ): Promise<ActionResult> {
   await requireRole("director");
   const cleanName = name.trim();
-  const cleanLevel = level.trim();
   if (!cleanName) return { error: "Le nom de la classe est requis." };
 
-  await db.query("UPDATE classes SET name = $1, level = $2 WHERE id = $3", [
+  await db.query("UPDATE classes SET name = $1 WHERE id = $2", [
     cleanName,
-    cleanLevel,
     classId,
   ]);
   revalidatePaths(["/director", "/director/classes"]);

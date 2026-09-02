@@ -5,22 +5,29 @@ import type { ActionResult } from "@/lib/actions/auth";
 
 type DeleteActionButtonProps = {
   id: string;
+  name: string;
   action: (id: string) => Promise<ActionResult>;
   label?: string;
-  confirmText?: string;
 };
 
 export function DeleteActionButton({
   id,
+  name,
   action,
   label,
-  confirmText = "Confirmer la suppression",
 }: DeleteActionButtonProps) {
   return (
     <ConfirmButton
       action={() => action(id)}
-      confirmText={confirmText}
-      aria-label={label}
+      title="Supprimer la classe"
+      message={
+        <>
+          Supprimer définitivement la classe <strong>{name}</strong> ainsi que son
+          emploi du temps, ses matières et tous les enseignements associés ?
+        </>
+      }
+      confirmLabel="Supprimer"
+      ariaLabel={label}
     />
   );
 }

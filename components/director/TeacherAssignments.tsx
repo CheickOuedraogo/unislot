@@ -76,7 +76,7 @@ export function TeacherAssignments({
               className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-3"
             >
               <span className="inline-flex items-center justify-center size-9 rounded-lg bg-surface-container text-secondary shrink-0 font-label-caps text-label-caps font-semibold">
-                {a.level ?? "–"}
+                {a.className.charAt(0)}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-body-sm text-body-sm font-medium text-on-surface truncate">
@@ -88,7 +88,9 @@ export function TeacherAssignments({
               </div>
               <ConfirmButton
                 action={() => deleteAssignment(a.id)}
-                confirmText={`Supprimer ${a.subjectName} (${a.className})`}
+                title="Retirer une matière"
+                message={`Retirer « ${a.subjectName} » (${a.className}) de cet enseignant ?`}
+                confirmLabel="Retirer"
               />
             </li>
           ))}
@@ -119,7 +121,6 @@ export function TeacherAssignments({
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
-                  {c.level ? ` (${c.level})` : ""}
                 </option>
               ))}
             </select>

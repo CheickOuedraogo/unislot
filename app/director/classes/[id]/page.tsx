@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import {
   getAllTeachers,
-  getAvailableSubjectsForClass,
   getClassById,
   getSubjectsOfClass,
 } from "@/lib/queries";
@@ -31,9 +30,8 @@ export default async function ClassDetailPage({
   const schoolClass = await getClassById(id);
   if (!schoolClass) notFound();
 
-  const [subjects, availableSubjects, teachers] = await Promise.all([
+  const [subjects, teachers] = await Promise.all([
     getSubjectsOfClass(id),
-    getAvailableSubjectsForClass(id),
     getAllTeachers(),
   ]);
 
@@ -71,7 +69,6 @@ export default async function ClassDetailPage({
             {schoolClass.name}
           </h1>
           <p className="font-body-sm text-body-sm text-secondary mt-1">
-            Niveau : {schoolClass.level || "—"} ·{" "}
             {items.length} matière{items.length > 1 ? "s" : ""}
           </p>
         </div>
@@ -79,18 +76,16 @@ export default async function ClassDetailPage({
           <EditClassModal schoolClass={schoolClass} />
           <DeleteActionButton
             id={schoolClass.id}
+            name={schoolClass.name}
             action={deleteClass}
             label={`Supprimer ${schoolClass.name}`}
-            confirmText={`Supprimer ${schoolClass.name}`}
           />
         </div>
       </section>
 
       <ClassSubjects
         classId={schoolClass.id}
-        className={schoolClass.name}
         subjects={items}
-        availableSubjects={availableSubjects}
         teachers={teachers.filter((t) => t.is_active)}
       />
     </AppShell>

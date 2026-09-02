@@ -8,7 +8,6 @@ export type User = {
   first_name: string;
   last_name: string;
   is_active: boolean;
-  must_change_password: boolean;
   created_at: string;
 };
 
@@ -30,18 +29,6 @@ export type Teacher = {
 export type Subject = {
   id: string;
   name: string;
-  usage_count?: number;
-};
-
-export type TeacherSubject = {
-  id: string;
-  teacher_id: string;
-  subject_id: string;
-  class_id: string;
-  teacher_name: string;
-  subject_name: string;
-  class_name: string;
-  class_level?: string;
 };
 
 export type CourseType = "cours" | "td" | "tp" | "devoir";
@@ -74,4 +61,10 @@ export type SwapRequest = {
   slot_day: number;
   slot_start: string;
   slot_end: string;
+  proposed_start_time: string;
+  proposed_end_time: string;
+  class_name: string;
+  class_level?: string;
+  class_id: string;
+  owner_name: string;
 };

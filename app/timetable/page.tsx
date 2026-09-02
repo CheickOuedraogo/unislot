@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import {
   getAllTeachers,
   getClassesForUser,
+  getClassSubjectTeachers,
   getSlotsForClass,
   getSubjectsForClass,
 } from "@/lib/queries";
@@ -49,10 +50,11 @@ export default async function TimetablePage({ searchParams }: Props) {
     );
   }
 
-  const [slots, subjects, teachers] = await Promise.all([
+  const [slots, subjects, teachers, subjectTeachers] = await Promise.all([
     getSlotsForClass(selectedId),
     getSubjectsForClass(user, selectedId),
     getAllTeachers(),
+    getClassSubjectTeachers(selectedId),
   ]);
 
   const selectedClass = classes.find((c) => c.id === selectedId);
@@ -94,6 +96,7 @@ export default async function TimetablePage({ searchParams }: Props) {
           slots={slots}
           subjects={subjects}
           teachers={teachers}
+          subjectTeachers={subjectTeachers}
           classId={selectedId}
           weekStart={weekStart.toISOString().slice(0, 10)}
           user={{ id: user.id, role: user.role, name: user.name }}

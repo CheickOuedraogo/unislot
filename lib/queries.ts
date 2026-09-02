@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import type { SchoolClass, Slot, Subject, Teacher, TeacherSubject, User } from "@/lib/types";
+import type { SchoolClass, Slot, Subject, Teacher, User } from "@/lib/types";
 
 export async function getClassesForUser(user: User): Promise<SchoolClass[]> {
   if (user.role === "director") {
@@ -95,6 +95,29 @@ export async function getAllTeachers(): Promise<Teacher[]> {
   return rows;
 }
 
+export async function getClassSubjectTeachers(
+  classId: string
+): Promise<Record<string, { id: string; name: string }[]>> {
+  const { rows } = await db.query<{
+    subject_id: string;
+    id: string;
+    name: string;
+  }>(
+    `SELECT ts.subject_id, u.id, u.name
+     FROM teacher_subjects ts
+     JOIN users u ON u.id = ts.teacher_id
+     WHERE ts.class_id = $1
+     ORDER BY u.name`,
+    [classId]
+  );
+  const map: Record<string, { id: string; name: string }[]> = {};
+  for (const row of rows) {
+    if (!map[row.subject_id]) map[row.subject_id] = [];
+    map[row.subject_id].push({ id: row.id, name: row.name });
+  }
+  return map;
+}
+
 export async function getTeacherById(userId: string): Promise<
   | (Teacher & {
       assignments: {
@@ -170,19 +193,6 @@ export async function getClassesWithStats(): Promise<ClassWithStats[]> {
     subjectCount: Number(r.subject_count),
     teacherCount: Number(r.teacher_count),
   }));
-}
-
-export async function getAllAssignments(): Promise<TeacherSubject[]> {
-  const { rows } = await db.query<TeacherSubject>(
-    `SELECT ts.id, ts.teacher_id, ts.subject_id, ts.class_id,
-            u.name AS teacher_name, su.name AS subject_name, c.name AS class_name, c.level AS class_level
-     FROM teacher_subjects ts
-     JOIN users u ON u.id = ts.teacher_id
-     JOIN subjects su ON su.id = ts.subject_id
-     JOIN classes c ON c.id = ts.class_id
-     ORDER BY c.name, u.name, su.name`
-  );
-  return rows;
 }
 
 export async function getDirectorStats(): Promise<{

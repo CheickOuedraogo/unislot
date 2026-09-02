@@ -21,6 +21,8 @@ export function SwapModal({ onClose, slot, subjects }: SwapModalProps) {
   const [proposedSubjectId, setProposedSubjectId] = useState(
     subjects[0]?.id ?? ""
   );
+  const [start, setStart] = useState(slot.start_time.slice(0, 5));
+  const [end, setEnd] = useState(slot.end_time.slice(0, 5));
   const [message, setMessage] = useState("");
   const [state, setState] = useState<ActionResult>({});
   const [pending, startTransition] = useTransition();
@@ -32,6 +34,8 @@ export function SwapModal({ onClose, slot, subjects }: SwapModalProps) {
         slotId: slot.id,
         message,
         proposedSubjectId,
+        proposedStart: start,
+        proposedEnd: end,
       });
       setState(res);
       if (!res.error) {
@@ -43,25 +47,27 @@ export function SwapModal({ onClose, slot, subjects }: SwapModalProps) {
 
   return (
     <Modal
-      title="Demander un échange"
+      title="Demander un créneau"
       onClose={onClose}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             Annuler
           </Button>
-          <Button onClick={submit} disabled={pending}>
+          <Button type="submit" form="swap-modal-form" disabled={pending}>
             {pending ? "Envoi…" : "Envoyer la demande"}
           </Button>
         </>
       }
     >
+      <form id="swap-modal-form" onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <Alert state={state} />
       <p className="font-body-sm text-body-sm text-secondary">
-        Vous souhaitez récupérer le créneau{" "}
+        Vous demandez tout ou partie du créneau{" "}
         <strong className="text-on-surface">{slot.subject_name}</strong> du{" "}
         {formatDayOfWeek(slot.day_of_week)} {formatTime(slot.start_time)} -{" "}
-        {formatTime(slot.end_time)}.
+        {formatTime(slot.end_time)}. La plage choisie ne doit pas chevaucher un
+        autre cours de la classe.
       </p>
       <label className="font-label-caps text-label-caps text-secondary block">
         Matière que vous proposez
@@ -77,15 +83,38 @@ export function SwapModal({ onClose, slot, subjects }: SwapModalProps) {
           ))}
         </select>
       </label>
+      <div className="grid grid-cols-2 gap-3">
+        <label className="font-label-caps text-label-caps text-secondary block">
+          Début
+          <input
+            type="time"
+            className={`${inputClass} mt-1`}
+            value={start}
+            step={300}
+            onChange={(e) => setStart(e.target.value)}
+          />
+        </label>
+        <label className="font-label-caps text-label-caps text-secondary block">
+          Fin
+          <input
+            type="time"
+            className={`${inputClass} mt-1`}
+            value={end}
+            step={300}
+            onChange={(e) => setEnd(e.target.value)}
+          />
+        </label>
+      </div>
       <label className="font-label-caps text-label-caps text-secondary block">
         Message
         <textarea
           className={`${inputClass} mt-1 min-h-24`}
-          placeholder="Expliquez votre demande (urgence, échange de matière…)"
+          placeholder="Expliquez votre demande (urgence, voyage, échange…)"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
       </label>
+      </form>
     </Modal>
   );
 }

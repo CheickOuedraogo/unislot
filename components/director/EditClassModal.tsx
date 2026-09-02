@@ -6,21 +6,19 @@ import { EditModal } from "@/components/director/EditModal";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { updateClass } from "@/lib/actions/classes";
-import { LEVELS } from "@/lib/constants";
 import type { ActionResult } from "@/lib/actions/auth";
 import type { SchoolClass } from "@/lib/types";
 
 export function EditClassModal({ schoolClass }: { schoolClass: SchoolClass }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(schoolClass.name);
-  const [level, setLevel] = useState(schoolClass.level);
   const [state, setState] = useState<ActionResult>({});
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   const save = () => {
     startTransition(async () => {
-      const res = await updateClass(schoolClass.id, name, level);
+      const res = await updateClass(schoolClass.id, name);
       setState(res);
       if (!res.error) {
         setOpen(false);
@@ -37,7 +35,6 @@ export function EditClassModal({ schoolClass }: { schoolClass: SchoolClass }) {
         title="Modifier"
         onClick={() => {
           setName(schoolClass.name);
-          setLevel(schoolClass.level);
           setState({});
           setOpen(true);
         }}
@@ -61,23 +58,6 @@ export function EditClassModal({ schoolClass }: { schoolClass: SchoolClass }) {
               onChange={(e) => setName(e.target.value)}
               className={inputClassLg}
             />
-          </Field>
-          <Field label="Niveau">
-            <select
-              required
-              value={level}
-              onChange={(e) => setLevel(e.target.value)}
-              className={inputClassLg}
-            >
-              <option value="" disabled>
-                Niveau…
-              </option>
-              {LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
           </Field>
         </EditModal>
       )}

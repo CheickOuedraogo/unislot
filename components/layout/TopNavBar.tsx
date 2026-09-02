@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
-import { NotificationsBell } from "./NotificationsBell";
 import { MobileNav } from "./MobileNav";
 import { logout } from "@/lib/actions/auth";
 import type { Role } from "@/lib/types";
@@ -40,7 +39,6 @@ export function TopNavBar({ navItems, user, children }: TopNavBarProps) {
         </div>
 
         <div className="flex items-center gap-gutter">
-          {user && <NotificationsBell />}
           {user && (
             <form action={logout}>
               <button
