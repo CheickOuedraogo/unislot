@@ -13,8 +13,8 @@ export const DAY_LABELS_FULL = [
 
 export const GRID_DAYS = [0, 1, 2, 3, 4, 5] as const;
 
-export const START_HOUR = 8;
-export const END_HOUR = 18;
+export const START_HOUR = 7;
+export const END_HOUR = 20;
 
 export const hours = Array.from(
   { length: END_HOUR - START_HOUR },
@@ -44,8 +44,6 @@ export const courseTypeCardClass: Record<CourseType, string> = {
 
 export const SESSION_COOKIE = "unislot_session";
 export const SESSION_DURATION_DAYS = 30;
-
-export const LEVELS = ["L1", "L2", "L3", "M1", "M2"] as const;
 
 export const ROLE_LABELS: Record<Role, string> = {
   director: "Directeur",

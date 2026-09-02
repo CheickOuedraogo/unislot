@@ -20,6 +20,10 @@ export type SlotInput = {
 const TYPES: CourseType[] = ["cours", "td", "tp", "devoir"];
 const TIME_RE = /^\d{2}:\d{2}$/;
 
+function normalizeTime(t: string): string {
+  return t.length > 5 ? t.slice(0, 5) : t;
+}
+
 function validate(input: SlotInput): string | null {
   if (!TYPES.includes(input.type)) return "Type de séance invalide.";
   if (!input.classId || !input.subjectId) return "Classe et matière requises.";
@@ -44,7 +48,7 @@ async function assertCanCreate(
   if (user.role === "director") return null;
   const { rowCount } = await db.query(
     "SELECT 1 FROM teacher_subjects WHERE teacher_id = $1 AND subject_id = $2 AND class_id = $3",
-    [user.id, classId, subjectId]
+    [user.id, subjectId, classId]
   );
   return rowCount ? null : "Vous n'êtes pas assigné à cette matière dans cette classe.";
 }
@@ -101,7 +105,12 @@ async function replaceProfessors(
   );
 }
 
-export async function createSlot(input: SlotInput): Promise<ActionResult> {
+export async function createSlot(rawInput: SlotInput): Promise<ActionResult> {
+  const input = {
+    ...rawInput,
+    startTime: normalizeTime(rawInput.startTime),
+    endTime: normalizeTime(rawInput.endTime),
+  };
   const error = validate(input);
   if (error) return { error };
   const user = await requireUser();
@@ -131,7 +140,12 @@ export async function createSlot(input: SlotInput): Promise<ActionResult> {
   return { success: "Créneau créé." };
 }
 
-export async function updateSlot(slotId: string, input: SlotInput): Promise<ActionResult> {
+export async function updateSlot(slotId: string, rawInput: SlotInput): Promise<ActionResult> {
+  const input = {
+    ...rawInput,
+    startTime: normalizeTime(rawInput.startTime),
+    endTime: normalizeTime(rawInput.endTime),
+  };
   const error = validate(input);
   if (error) return { error };
   const user = await requireUser();

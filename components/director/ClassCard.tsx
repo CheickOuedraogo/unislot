@@ -33,17 +33,14 @@ export function ClassCard({ schoolClass }: ClassCardProps) {
         <span className="font-title-md text-title-md text-on-surface truncate">
           {schoolClass.name}
         </span>
-        <span className="font-label-caps text-label-caps text-secondary uppercase">
-          {schoolClass.level || "—"}
-        </span>
       </div>
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
         <EditClassModal schoolClass={schoolClass} />
         <DeleteActionButton
           id={schoolClass.id}
+          name={schoolClass.name}
           action={deleteClass}
           label={`Supprimer ${schoolClass.name}`}
-          confirmText={`Supprimer ${schoolClass.name}`}
         />
       </div>
     </div>

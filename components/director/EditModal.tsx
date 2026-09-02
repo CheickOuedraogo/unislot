@@ -30,14 +30,16 @@ export function EditModal({
           <Button variant="secondary" onClick={onClose}>
             Annuler
           </Button>
-          <Button onClick={onSave} disabled={pending}>
+          <Button type="submit" form="edit-modal-form" disabled={pending}>
             {pending ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </>
       }
     >
-      <Alert state={{ error }} />
-      {children}
+      <form id="edit-modal-form" onSubmit={(e) => { e.preventDefault(); onSave(); }}>
+        <Alert state={{ error }} />
+        {children}
+      </form>
     </Modal>
   );
 }

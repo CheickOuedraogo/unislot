@@ -41,7 +41,7 @@ async function changeUserPassword(
 
   const passwordHash = await hashPassword(next);
   await db.query(
-    "UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2",
+    "UPDATE users SET password_hash = $1 WHERE id = $2",
     [passwordHash, user.id]
   );
   return {};
@@ -59,11 +59,10 @@ export async function login(
   const { rows } = await db.query<{
     id: string;
     password_hash: string;
-    must_change_password: boolean;
     role: "director" | "teacher";
     is_active: boolean;
   }>(
-    "SELECT id, password_hash, must_change_password, role, is_active FROM users WHERE email = $1",
+    "SELECT id, password_hash, role, is_active FROM users WHERE email = $1",
     [email]
   );
   const user = rows[0];
@@ -100,32 +99,33 @@ export async function logout(): Promise<void> {
 }
 
 export async function createTeacherAccount(
-  _state: ActionResult,
-  formData: FormData
+  firstName: string,
+  lastName: string,
+  email: string,
+  password: string
 ): Promise<ActionResult> {
   await requireRole("director");
 
-  const firstName = String(formData.get("firstName") ?? "").trim();
-  const lastName = String(formData.get("lastName") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "");
+  const cleanFirst = firstName.trim();
+  const cleanLast = lastName.trim();
+  const cleanEmail = email.trim().toLowerCase();
 
-  if (!firstName || !lastName) return { error: "Nom et prénom requis." };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Email invalide." };
+  if (!cleanFirst || !cleanLast) return { error: "Nom et prénom requis." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return { error: "Email invalide." };
   if (!password || password.length < MIN_PASSWORD_LENGTH) {
     return {
       error: `Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`,
     };
   }
 
-  const { rowCount } = await db.query("SELECT 1 FROM users WHERE email = $1", [email]);
+  const { rowCount } = await db.query("SELECT 1 FROM users WHERE email = $1", [cleanEmail]);
   if (rowCount) return { error: "Un compte avec cet email existe déjà." };
 
-  const name = `${lastName} ${firstName}`.trim();
+  const name = `${cleanLast} ${cleanFirst}`.trim();
   const passwordHash = await hashPassword(password);
   await db.query(
-    "INSERT INTO users (name, email, password_hash, role, first_name, last_name, must_change_password) VALUES ($1, $2, $3, 'teacher', $4, $5, false)",
-    [name, email, passwordHash, firstName, lastName]
+    "INSERT INTO users (name, email, password_hash, role, first_name, last_name) VALUES ($1, $2, $3, 'teacher', $4, $5)",
+    [name, cleanEmail, passwordHash, cleanFirst, cleanLast]
   );
   revalidatePaths(["/director", "/director/teachers"]);
   return { success: "Compte enseignant créé." };
@@ -149,7 +149,7 @@ export async function updateTeacherPassword(
 
   const passwordHash = await hashPassword(password);
   const { rowCount } = await db.query(
-    "UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2 AND role = 'teacher'",
+    "UPDATE users SET password_hash = $1 WHERE id = $2 AND role = 'teacher'",
     [passwordHash, userId]
   );
   if (!rowCount) return { error: "Enseignant introuvable." };
@@ -163,10 +163,8 @@ export async function deleteTeacher(userId: string): Promise<ActionResult> {
   if (userId === (await getCurrentUser())?.id) {
     return { error: "Impossible de supprimer votre propre compte." };
   }
-  const { rows } = await db.query("SELECT id FROM slots WHERE creator_teacher_id = $1 LIMIT 1", [userId]);
-  if (rows.length > 0) {
-    return { error: "Cet enseignant possède des créneaux. Supprimez-les d'abord." };
-  }
+  await db.query("DELETE FROM slots WHERE creator_teacher_id = $1", [userId]);
+  await db.query("DELETE FROM swap_requests WHERE requesting_teacher_id = $1", [userId]);
   await db.query("DELETE FROM users WHERE id = $1", [userId]);
   revalidatePaths(["/director", "/director/teachers"]);
   return { success: "Enseignant supprimé." };
@@ -217,6 +215,12 @@ export async function updateTeacherAccount(
   if (!userId) return { error: "Enseignant introuvable." };
   if (!firstName || !lastName) return { error: "Prénom et nom requis." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Email invalide." };
+
+  const { rowCount: existing } = await db.query(
+    "SELECT 1 FROM users WHERE email = $1 AND id != $2",
+    [email, userId]
+  );
+  if (existing) return { error: "Un compte avec cet email existe déjà." };
 
   const { rowCount } = await db.query(
     "UPDATE users SET name = $1, email = $2, first_name = $3, last_name = $4 WHERE id = $5 AND role = 'teacher'",

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 
 type ClassSelectorProps = {
-  classes: { id: string; name: string; level: string }[];
+  classes: { id: string; name: string }[];
   selectedId: string;
   weekStart: string;
   basePath?: string;
@@ -31,7 +31,6 @@ export function ClassSelector({
       {classes.map((c) => (
         <option key={c.id} value={c.id}>
           {c.name}
-          {c.level ? ` (${c.level})` : ""}
         </option>
       ))}
     </select>

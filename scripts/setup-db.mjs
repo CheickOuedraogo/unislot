@@ -11,8 +11,8 @@ const DB_NAME = "unislot";
 const DATABASE_URL =
   process.env.DATABASE_URL ?? `postgresql://postgres@127.0.0.1:5432/${DB_NAME}`;
 
-const DEFAULT_PASSWORD = "Ecole123!";
-const DIRECTOR_EMAIL = "directeur@unislot.fr";
+const DEFAULT_PASSWORD = "12345678";
+const DIRECTOR_EMAIL = "hcheick75@gmail.com";
 
 function hashPassword(password) {
   const salt = randomBytes(16).toString("hex");
@@ -44,8 +44,8 @@ async function seed(db) {
   }
 
   await db.query(
-    `INSERT INTO users (name, email, password_hash, role, must_change_password)
-     VALUES ($1, $2, $3, 'director', false)`,
+    `INSERT INTO users (name, email, password_hash, role)
+     VALUES ($1, $2, $3, 'director')`,
     ["Directeur", DIRECTOR_EMAIL, hashPassword(DEFAULT_PASSWORD)]
   );
 
@@ -57,8 +57,8 @@ async function seed(db) {
   const teacherIds = {};
   for (const [name, email] of teacherRows) {
     const { rows } = await db.query(
-      `INSERT INTO users (name, email, password_hash, role, must_change_password)
-       VALUES ($1, $2, $3, 'teacher', false)
+      `INSERT INTO users (name, email, password_hash, role)
+       VALUES ($1, $2, $3, 'teacher')
        RETURNING id`,
       [name, email, hashPassword(DEFAULT_PASSWORD)]
     );

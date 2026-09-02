@@ -1,5 +1,11 @@
 import { DAY_LABELS, DAY_LABELS_FULL } from "./constants";
 
+export function randomId(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export function formatTime(time: string): string {
   const [h, m] = time.split(":").map(Number);
   return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
@@ -56,4 +62,26 @@ export function minutesOfDay(time: string): number {
 
 export function formatDayOfWeek(day: number): string {
   return DAY_LABELS_FULL[day] ?? "";
+}
+
+export function getDayDate(dayOfWeek: number, weekStart = getMonday()): Date {
+  const d = new Date(weekStart);
+  d.setDate(weekStart.getDate() + dayOfWeek);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export function formatDayDate(dayOfWeek: number, weekStart = getMonday(), opts: Intl.DateTimeFormatOptions = {}): string {
+  return getDayDate(dayOfWeek, weekStart).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+    ...opts,
+  });
+}
+
+export function isDayInPast(dayOfWeek: number, weekStart = getMonday(), now = new Date()): boolean {
+  const dayStart = getDayDate(dayOfWeek, weekStart);
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  return dayStart.getTime() < todayStart.getTime();
 }

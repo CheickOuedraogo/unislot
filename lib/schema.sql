@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS users (
   first_name text NOT NULL DEFAULT '',
   last_name text NOT NULL DEFAULT '',
   is_active boolean NOT NULL DEFAULT true,
-  must_change_password boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -65,6 +64,8 @@ CREATE TABLE IF NOT EXISTS swap_requests (
   requesting_teacher_id uuid NOT NULL REFERENCES users(id),
   message text NOT NULL,
   proposed_subject_id uuid NOT NULL REFERENCES subjects(id),
+  proposed_start_time time NOT NULL DEFAULT '08:00',
+  proposed_end_time time NOT NULL DEFAULT '10:00',
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
   created_at timestamptz NOT NULL DEFAULT now()
 );

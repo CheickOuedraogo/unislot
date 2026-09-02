@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { courseTypeLabels } from "@/lib/constants";
-import type { CourseType, Slot, Subject } from "@/lib/types";
+import type { CourseType, Role, Slot, Subject } from "@/lib/types";
 import { Modal } from "@/components/ui/Modal";
 import { Field, inputClass } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
@@ -18,11 +18,13 @@ type ConfigModalProps = {
   classId: string;
   subjects: Subject[];
   teachers: { id: string; name: string }[];
+  subjectTeachers: Record<string, { id: string; name: string }[]>;
   dayOfWeek: number;
   defaultStart: string;
   defaultEnd: string;
   slot?: Slot;
   currentUserId: string;
+  role: Role;
 };
 
 export function ConfigModal({
@@ -31,11 +33,13 @@ export function ConfigModal({
   classId,
   subjects,
   teachers,
+  subjectTeachers,
   dayOfWeek,
   defaultStart,
   defaultEnd,
   slot,
   currentUserId,
+  role,
 }: ConfigModalProps) {
   const [type, setType] = useState<CourseType>(slot?.type ?? "cours");
   const [subjectId, setSubjectId] = useState(
@@ -78,16 +82,27 @@ export function ConfigModal({
   };
 
   const toggleProfessor = (id: string) => {
+    if (isLockedProfessor(id)) return;
     setProfessorIds((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
   };
 
-  const available = teachers.filter(
+  const isTeacher = role === "teacher";
+  const isLockedProfessor = (id: string) => isTeacher && id === currentUserId;
+
+  const assignedTeachers = subjectTeachers[subjectId] ?? [];
+  const available = assignedTeachers.filter(
     (t) =>
       !professorIds.includes(t.id) &&
       t.name.toLowerCase().includes(profQuery.trim().toLowerCase())
   );
+
+  const canAddProfessor = assignedTeachers.length > 0;
+  const otherTeachers = assignedTeachers.filter(
+    (t) => !isLockedProfessor(t.id) && !professorIds.includes(t.id)
+  );
+  const canAddMore = otherTeachers.length > 0;
 
   return (
     <Modal
@@ -100,14 +115,15 @@ export function ConfigModal({
           <Button variant="secondary" onClick={onClose}>
             Annuler
           </Button>
-          <Button onClick={submit} disabled={pending}>
+          <Button type="submit" form="config-modal-form" disabled={pending}>
             {pending ? "Enregistrement…" : mode === "edit" ? "Enregistrer" : "Valider"}
           </Button>
         </>
       }
     >
-      <Alert state={state} />
-      <div className="grid grid-cols-2 gap-4">
+      <form id="config-modal-form" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+        <Alert state={state} />
+        <div className="grid grid-cols-2 gap-4">
         <Field label="Type">
           <select
             className={inputClass}
@@ -172,13 +188,15 @@ export function ConfigModal({
                 className="flex items-center gap-1 bg-surface-container border border-outline-variant rounded-full px-3 py-1 font-body-sm text-body-sm text-on-surface-variant"
               >
                 <span>{teacher.name}</span>
-                <button
-                  aria-label={`Retirer ${teacher.name}`}
-                  className="hover:text-error transition-colors ml-1 mt-0.5"
-                  onClick={() => toggleProfessor(id)}
-                >
-                  <Icon name="cancel" size={14} />
-                </button>
+                {!isLockedProfessor(id) && (
+                  <button
+                    aria-label={`Retirer ${teacher.name}`}
+                    className="hover:text-error transition-colors ml-1 mt-0.5"
+                    onClick={() => toggleProfessor(id)}
+                  >
+                    <Icon name="cancel" size={14} />
+                  </button>
+                )}
               </span>
             );
           })}
@@ -188,35 +206,45 @@ export function ConfigModal({
             </span>
           )}
         </div>
-        <div className="relative">
-          <Icon
-            name="search"
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline"
-          />
-          <input
-            type="text"
-            placeholder="Rechercher un professeur…"
-            className={`${inputClass} pl-9`}
-            value={profQuery}
-            onChange={(e) => setProfQuery(e.target.value)}
-          />
-        </div>
-        {available.length > 0 && (
-          <div className="mt-2 border border-outline-variant rounded max-h-40 overflow-y-auto">
-            {available.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => toggleProfessor(t.id)}
-                className="w-full text-left px-3 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center justify-between"
-              >
-                <span>{t.name}</span>
-                <Icon name="add" size={16} className="text-secondary" />
-              </button>
-            ))}
-          </div>
+        {canAddProfessor && canAddMore && (
+          <>
+            <div className="relative">
+              <Icon
+                name="search"
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+              />
+              <input
+                type="text"
+                placeholder="Rechercher un professeur…"
+                className={`${inputClass} pl-9`}
+                value={profQuery}
+                onChange={(e) => setProfQuery(e.target.value)}
+              />
+            </div>
+            {available.length > 0 && (
+              <div className="mt-2 border border-outline-variant rounded max-h-40 overflow-y-auto">
+                {available.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => toggleProfessor(t.id)}
+                    className="w-full text-left px-3 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center justify-between"
+                  >
+                    <span>{t.name}</span>
+                    <Icon name="add" size={16} className="text-secondary" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+        {!canAddProfessor && (
+          <p className="font-body-sm text-body-sm text-secondary mt-2">
+            Aucun enseignant n&apos;est assigné à cette matière dans cette classe.
+          </p>
         )}
       </div>
+      </form>
     </Modal>
   );
 }

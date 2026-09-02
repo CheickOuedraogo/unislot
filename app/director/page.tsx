@@ -7,13 +7,6 @@ import { StatCard } from "@/components/director/StatCard";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 
-const CLASS_ACCENTS = [
-  { border: "border-primary", badge: "bg-primary/10 text-primary" },
-  { border: "border-tertiary", badge: "bg-tertiary/10 text-tertiary" },
-  { border: "border-error", badge: "bg-error/10 text-error" },
-  { border: "border-secondary", badge: "bg-secondary/10 text-secondary" },
-];
-
 function todayLabel(): string {
   return new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -90,8 +83,7 @@ export default async function DirectorPage() {
           </p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {classes.map((c, i) => {
-              const accent = CLASS_ACCENTS[i % CLASS_ACCENTS.length];
+            {classes.map((c) => {
               return (
                 <div
                   key={c.id}
@@ -99,13 +91,6 @@ export default async function DirectorPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex flex-col gap-2 min-w-0">
-                      {c.level && (
-                        <span
-                          className={`inline-flex self-start px-2 py-0.5 rounded-md font-label-caps text-label-caps uppercase ${accent.badge}`}
-                        >
-                          {c.level}
-                        </span>
-                      )}
                       <h3 className="font-headline-md text-headline-md text-on-surface truncate">
                         <Link
                           href={`/director/classes/${c.id}`}

@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from "react";
 import { Icon } from "./Icon";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "icon";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "dangerSolid" | "icon";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
@@ -19,6 +19,8 @@ const variantClasses: Record<Variant, string> = {
     "bg-surface-container-lowest text-on-surface border border-outline-variant hover:bg-surface-container hover:border-outline",
   ghost: "text-secondary hover:text-primary hover:bg-surface-container",
   danger: "text-secondary hover:text-error hover:bg-error-container",
+  dangerSolid:
+    "bg-error text-on-error hover:brightness-110 border border-error shadow-sm shadow-error/30",
   icon: "text-secondary hover:text-primary hover:bg-surface-container rounded-full",
 };
 

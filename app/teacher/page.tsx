@@ -6,11 +6,14 @@ import {
   getTeacherAssignments,
   getTeacherStats,
   getAllTeachers,
+  getClassSubjectTeachers,
 } from "@/lib/queries";
+import { getMySwapRequests } from "@/lib/actions/swaps";
 import { navItemsFor } from "@/lib/nav";
 import { parseWeekStart, formatWeekRange } from "@/lib/utils";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatCards } from "@/components/teacher/StatCards";
+import { MySwapRequests } from "@/components/teacher/MySwapRequests";
 import { ClassSelector } from "@/components/timetable/ClassSelector";
 import { WeekNavigator } from "@/components/timetable/WeekNavigator";
 import { TimetableGrid } from "@/components/timetable/TimetableGrid";
@@ -29,9 +32,10 @@ export default async function TeacherDashboard({ searchParams }: Props) {
   const { class: classParam, week } = await searchParams;
   const weekStart = parseWeekStart(week);
 
-  const [assignments, stats] = await Promise.all([
+  const [assignments, stats, myRequests] = await Promise.all([
     getTeacherAssignments(user.id),
     getTeacherStats(user.id),
+    getMySwapRequests(),
   ]);
 
   const classes = assignments.map((a) => ({
@@ -75,7 +79,6 @@ export default async function TeacherDashboard({ searchParams }: Props) {
                   <span className="text-secondary">
                     {" "}
                     — {selectedClass.name}
-                    {selectedClass.level ? ` (${selectedClass.level})` : ""}
                   </span>
                 )}
               </h2>
@@ -105,12 +108,23 @@ export default async function TeacherDashboard({ searchParams }: Props) {
             slots={await getSlotsForClass(selectedId)}
             subjects={await getSubjectsForClass(user, selectedId)}
             teachers={await getAllTeachers()}
+            subjectTeachers={await getClassSubjectTeachers(selectedId)}
             classId={selectedId}
             weekStart={weekStart.toISOString().slice(0, 10)}
             user={{ id: user.id, role: user.role, name: user.name }}
           />
         </>
       )}
+
+      <section className="flex flex-col gap-4">
+        <h2 className="font-headline-md text-headline-md text-on-background">
+          Mes demandes
+        </h2>
+        <MySwapRequests
+          requests={myRequests}
+          weekStart={weekStart.toISOString().slice(0, 10)}
+        />
+      </section>
 
       <div className="mt-2">
         <StatCards stats={stats} />

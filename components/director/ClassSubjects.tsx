@@ -9,14 +9,13 @@ import { Icon } from "@/components/ui/Icon";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import {
-  addSubjectToClass,
   createSubjectForClass,
   assignTeacherToClassSubject,
   removeSubjectFromClass,
 } from "@/lib/actions/class-subjects";
 import { deleteAssignment } from "@/lib/actions/assignments";
+import { randomId } from "@/lib/utils";
 import type { ActionResult } from "@/lib/actions/auth";
-import type { Subject } from "@/lib/types";
 
 export type ClassSubjectItem = {
   subjectId: string;
@@ -28,9 +27,7 @@ type TeacherOption = { id: string; name: string };
 
 type Props = {
   classId: string;
-  className: string;
   subjects: ClassSubjectItem[];
-  availableSubjects: Subject[];
   teachers: TeacherOption[];
 };
 
@@ -53,9 +50,7 @@ function initialsOf(name: string): string {
 
 export function ClassSubjects({
   classId,
-  className,
   subjects,
-  availableSubjects,
   teachers,
 }: Props) {
   const router = useRouter();
@@ -65,7 +60,6 @@ export function ClassSubjects({
   const [pending, startTransition] = useTransition();
 
   // Formulaire d'ajout de matière
-  const [choice, setChoice] = useState("");
   const [newName, setNewName] = useState("");
   const [formState, setFormState] = useState<ActionResult>({});
   const [formPending, startFormTransition] = useTransition();
@@ -87,7 +81,7 @@ export function ClassSubjects({
           teachers: [
             ...selected.teachers,
             {
-              assignmentId: crypto.randomUUID(),
+              assignmentId: randomId(),
               teacherName:
                 teachers.find((t) => t.id === teacherId)?.name ?? "",
             },
@@ -102,13 +96,9 @@ export function ClassSubjects({
   const submitAddSubject = (e: React.FormEvent) => {
     e.preventDefault();
     startFormTransition(async () => {
-      const res =
-        choice === "__new__"
-          ? await createSubjectForClass(classId, newName)
-          : await addSubjectToClass(classId, choice);
+      const res = await createSubjectForClass(classId, newName);
       setFormState(res);
       if (!res.error) {
-        setChoice("");
         setNewName("");
         router.refresh();
       }
@@ -170,42 +160,20 @@ export function ClassSubjects({
         </p>
         <Alert state={formState} />
         <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <Field label={choice === "__new__" ? "Nouvelle matière" : "Matière existante"}>
-            {choice === "__new__" ? (
-              <input
-                type="text"
-                required
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Ex. Statistiques"
-                className={`${inputClassLg} min-w-56`}
-              />
-            ) : (
-              <select
-                required
-                value={choice}
-                onChange={(e) => setChoice(e.target.value)}
-                className={`${inputClassLg} min-w-56`}
-              >
-                <option value="" disabled>
-                  Choisir une matière…
-                </option>
-                {availableSubjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-                <option value="__new__">➕ Créer une nouvelle matière…</option>
-              </select>
-            )}
+          <Field label="Nom de la matière">
+            <input
+              type="text"
+              required
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Ex. Statistiques"
+              className={`${inputClassLg} min-w-56`}
+            />
           </Field>
           <Button type="submit" disabled={formPending}>
             {formPending ? "Ajout…" : "Ajouter"}
           </Button>
         </div>
-        <p className="font-label-caps text-label-caps text-secondary">
-          Les matières déjà présentes dans {className} n&apos;apparaissent pas dans la liste.
-        </p>
       </form>
 
       {selected && (
@@ -253,14 +221,16 @@ export function ClassSubjects({
                         }
                         return res;
                       }}
-                      confirmText="Retirer"
+                      title="Retirer l'enseignant"
+                      message={`Retirer ${t.teacherName} de la matière « ${selected.name} » ?`}
+                      confirmLabel="Retirer"
                     />
                   </li>
                 ))}
               </ul>
             )}
 
-            <div className="border-t border-outline-variant pt-4 flex flex-col gap-3">
+            <form onSubmit={(e) => { e.preventDefault(); submitAssign(); }} className="border-t border-outline-variant pt-4 flex flex-col gap-3">
               <Field label="Assigner un enseignant">
                 <select
                   value={teacherId}
@@ -279,10 +249,10 @@ export function ClassSubjects({
                     ))}
                 </select>
               </Field>
-              <Button onClick={submitAssign} disabled={!teacherId || pending}>
+              <Button type="submit" disabled={!teacherId || pending}>
                 {pending ? "Assignation…" : "Assigner"}
               </Button>
-            </div>
+            </form>
 
             <div className="border-t border-outline-variant pt-4">
               <ConfirmButton
@@ -296,7 +266,9 @@ export function ClassSubjects({
                   }
                   return res;
                 }}
-                confirmText="Confirmer le retrait"
+                title="Retirer la matière"
+                message={`Retirer « ${selected.name} » de la classe ainsi que tous les enseignements associés ?`}
+                confirmLabel="Retirer"
                 className="text-error hover:bg-error-container"
               >
                 Retirer cette matière de la classe

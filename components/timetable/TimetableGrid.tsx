@@ -10,7 +10,7 @@ import {
   START_HOUR,
   hours,
 } from "@/lib/constants";
-import { getWeekDays, formatTime, minutesOfDay } from "@/lib/utils";
+import { getWeekDays, formatTime, minutesOfDay, isDayInPast } from "@/lib/utils";
 import { Icon } from "@/components/ui/Icon";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { ConfigModal } from "./ConfigModal";
@@ -18,12 +18,13 @@ import { SwapModal } from "./SwapModal";
 import { deleteSlot } from "@/lib/actions/slots";
 import type { Role, Slot, Subject } from "@/lib/types";
 
-const formatHour = (h: number) => `${h}:00`;
+const formatHour = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
 type TimetableGridProps = {
   slots: Slot[];
   subjects: Subject[];
   teachers: { id: string; name: string }[];
+  subjectTeachers: Record<string, { id: string; name: string }[]>;
   classId: string;
   weekStart: string;
   user: { id: string; role: Role; name: string };
@@ -34,6 +35,9 @@ type ModalState =
   | { kind: "edit"; slot: Slot }
   | { kind: "swap"; slot: Slot }
   | null;
+
+const GRID_START_MIN = START_HOUR * 60;
+const GRID_TOTAL_MIN = (END_HOUR - START_HOUR) * 60;
 
 function courseCard(slot: Slot) {
   return (
@@ -63,10 +67,45 @@ function courseCard(slot: Slot) {
   );
 }
 
+function assignLanes(daySlots: Slot[]): Map<string, number> {
+  const sorted = [...daySlots].sort(
+    (a, b) =>
+      minutesOfDay(a.start_time) - minutesOfDay(b.start_time) ||
+      minutesOfDay(a.end_time) - minutesOfDay(b.end_time)
+  );
+  const lanes: number[] = [];
+  const assigned = new Map<string, number>();
+  for (const slot of sorted) {
+    const start = minutesOfDay(slot.start_time);
+    let laneIndex = lanes.findIndex((laneEnd) => laneEnd <= start);
+    if (laneIndex === -1) {
+      laneIndex = lanes.length;
+      lanes.push(0);
+    }
+    lanes[laneIndex] = minutesOfDay(slot.end_time);
+    assigned.set(slot.id, laneIndex);
+  }
+  return assigned;
+}
+
+function slotStyle(slot: Slot, lane: number, laneCount: number) {
+  const start = minutesOfDay(slot.start_time);
+  const end = minutesOfDay(slot.end_time);
+  const top = Math.max(0, (start - GRID_START_MIN) / GRID_TOTAL_MIN) * 100;
+  const bottom = Math.min(1, (end - GRID_START_MIN) / GRID_TOTAL_MIN) * 100;
+  return {
+    top: `${top}%`,
+    height: `${Math.max(1, bottom - top)}%`,
+    left: `${Math.max(0, (lane / laneCount) * 100)}%`,
+    width: `${100 / laneCount}%`,
+  };
+}
+
 export function TimetableGrid({
   slots,
   subjects,
   teachers,
+  subjectTeachers,
   classId,
   weekStart,
   user,
@@ -82,144 +121,92 @@ export function TimetableGrid({
   const canEdit = (slot: Slot) =>
     user.role === "director" || slot.creator_teacher_id === user.id;
 
-  const slotsByStart = new Map<string, Slot>();
-  for (const slot of slots) {
-    slotsByStart.set(
-      `${slot.day_of_week}:${Math.floor(minutesOfDay(slot.start_time) / 60)}`,
-      slot
+  const slotsByDay = new Map<number, { slot: Slot; lane: number; laneCount: number }[]>();
+  for (const day of GRID_DAYS) {
+    const daySlots = slots.filter((s) => s.day_of_week === day);
+    if (daySlots.length === 0) continue;
+    const lanes = assignLanes(daySlots);
+    const laneCount = Math.max(1, new Set(lanes.values()).size);
+    slotsByDay.set(
+      day,
+      daySlots.map((slot) => ({
+        slot,
+        lane: lanes.get(slot.id) ?? 0,
+        laneCount,
+      }))
     );
   }
 
-  const slotSpan = (slot: Slot) => {
-    const startRow = Math.max(
-      2,
-      Math.floor(minutesOfDay(slot.start_time) / 60) - START_HOUR + 2
+  const coveredHour = (dayOfWeek: number, hour: number) =>
+    slots.some(
+      (s) =>
+        s.day_of_week === dayOfWeek &&
+        Math.floor(minutesOfDay(s.start_time) / 60) <= hour &&
+        hour < Math.ceil(minutesOfDay(s.end_time) / 60)
     );
-    const endRow = Math.min(
-      1 + hours.length + 1,
-      Math.ceil(minutesOfDay(slot.end_time) / 60) - START_HOUR + 2
-    );
-    return { startRow, span: Math.max(1, endRow - startRow) };
-  };
+
+  const pastDay = (dayOfWeek: number) =>
+    isDayInPast(dayOfWeek, new Date(`${weekStart}T00:00:00`));
 
   return (
     <div className="p-4 flex-1 overflow-x-auto overflow-y-auto">
       <div className="min-w-[720px] max-w-container-max mx-auto bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
         <div className="timetable-grid">
-          <div className="bg-surface border-b border-r border-outline-variant" />
+          <div
+            className="bg-surface border-b border-r border-outline-variant"
+            style={{ gridColumn: 1, gridRow: 1 }}
+          />
           {weekDays.map((day, col) => (
             <div
               key={day.iso}
               className={`bg-surface border-b ${
                 col < weekDays.length - 1 ? "border-r " : ""
               }border-outline-variant p-2 text-center font-label-caps text-label-caps text-secondary flex flex-col justify-center`}
+              style={{ gridColumn: col + 2, gridRow: 1 }}
             >
               <span className="font-bold text-on-surface">{day.label}</span>
               <span>{day.date}</span>
             </div>
           ))}
-          {hours.map((hour) => {
+          {hours.map((hour, hourIndex) => {
             return (
               <Fragment key={hour}>
-                <div className="time-label font-label-caps text-label-caps">
+                <div
+                  className="time-label font-label-caps text-label-caps"
+                  style={{ gridColumn: 1, gridRow: hourIndex + 2 }}
+                >
                   {formatHour(hour)}
                 </div>
                 {weekDays.map((day, col) => {
                   const dayOfWeek = GRID_DAYS[col];
-                  const slot = slotsByStart.get(`${dayOfWeek}:${hour}`);
                   const cellBorder =
                     col === weekDays.length - 1
                       ? "border-b border-surface-container-low"
                       : "border-r border-b border-surface-container-low";
 
-                  if (slot) {
-                    const { startRow, span } = slotSpan(slot);
-                    const editable = canEdit(slot);
-                    return (
-                      <div
-                        key={`${hour}-${col}`}
-                        className={`grid-cell relative ${cellBorder}`}
-                        style={{
-                          gridRow: `${startRow} / span ${span}`,
-                          gridColumn: col + 2,
-                        }}
-                        onClick={() =>
-                          setOpenPopover((prev) =>
-                            prev === slot.id ? null : slot.id
-                          )
-                        }
-                        onMouseMove={(e) =>
-                          setHover({ slot, x: e.clientX, y: e.clientY })
-                        }
-                        onMouseEnter={(e) =>
-                          setHover({ slot, x: e.clientX, y: e.clientY })
-                        }
-                        onMouseLeave={() => setHover(null)}
-                      >
-                        {courseCard(slot)}
-                        {openPopover === slot.id && (
-                          <div
-                            className="absolute top-8 left-full ml-2 w-44 bg-surface-container-lowest border border-outline-variant rounded shadow-sm z-50 flex flex-col"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {editable && (
-                              <button
-                                className="text-left px-3 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2"
-                                onClick={() =>
-                                  setModal({ kind: "edit", slot })
-                                }
-                              >
-                                <Icon name="edit" size={16} /> Modifier
-                              </button>
-                            )}
-                            {!editable && (
-                              <button
-                                className="text-left px-3 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2"
-                                onClick={() =>
-                                  setModal({ kind: "swap", slot })
-                                }
-                              >
-                                <Icon name="swap_horiz" size={16} /> Demander un
-                                échange
-                              </button>
-                            )}
-                            {editable && (
-                              <>
-                                <div className="h-px bg-outline-variant w-full" />
-                                <ConfirmButton
-                                  action={() => deleteSlot(slot.id)}
-                                  confirmText="Confirmer"
-                                  className="justify-start px-3 py-2 w-full"
-                                >
-                                  Supprimer
-                                </ConfirmButton>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  const covered = slots.some(
-                    (s) =>
-                      s.day_of_week === dayOfWeek &&
-                      Math.floor(minutesOfDay(s.start_time) / 60) < hour &&
-                      hour < Math.ceil(minutesOfDay(s.end_time) / 60)
-                  );
-                  if (covered) return null;
+                  const covered = coveredHour(dayOfWeek, hour);
+                  const past = pastDay(dayOfWeek);
 
                   return (
                     <div
                       key={`${hour}-${col}`}
-                      className={`grid-cell ${cellBorder}`}
-                      onClick={() =>
-                        setModal({
-                          kind: "create",
-                          day: dayOfWeek,
-                          start: formatHour(hour),
-                          end: formatHour(Math.min(hour + 2, END_HOUR)),
-                        })
+                      className={`grid-cell ${cellBorder}${
+                        covered || past ? " pointer-events-none" : ""
+                      }`}
+                      style={{
+                        gridColumn: col + 2,
+                        gridRow: hourIndex + 2,
+                      }}
+                      onClick={
+                        covered || past
+                          ? undefined
+                          : () =>
+                              setModal({
+                                kind: "create",
+                                day: dayOfWeek,
+                                start: formatHour(hour),
+                                end: formatHour(Math.min(hour + 2, END_HOUR)),
+                              })
                       }
                     />
                   );
@@ -227,6 +214,99 @@ export function TimetableGrid({
               </Fragment>
             );
           })}
+
+          <div
+            className="pointer-events-none relative"
+            style={{
+              gridColumn: `2 / ${GRID_DAYS.length + 2}`,
+              gridRow: `2 / ${hours.length + 2}`,
+            }}
+          >
+            {GRID_DAYS.map((day, col) => {
+              const entries = slotsByDay.get(day);
+              if (!entries) return null;
+              return (
+                <div
+                  key={day}
+                  className="absolute top-0 bottom-0"
+                  style={{ left: `${col * (100 / 6)}%`, width: `${100 / 6}%` }}
+                >
+                  <div className="relative h-full">
+                    {entries.map(({ slot, lane, laneCount }) => {
+                      const editable = canEdit(slot);
+                      const style = slotStyle(slot, lane, laneCount);
+                      return (
+                        <div
+                          key={slot.id}
+                          className="absolute pointer-events-auto"
+                          style={style}
+                          onClick={() =>
+                            setOpenPopover((prev) =>
+                              prev === slot.id ? null : slot.id
+                            )
+                          }
+                          onMouseMove={(e) =>
+                            setHover({ slot, x: e.clientX, y: e.clientY })
+                          }
+                          onMouseEnter={(e) =>
+                            setHover({ slot, x: e.clientX, y: e.clientY })
+                          }
+                          onMouseLeave={() => setHover(null)}
+                        >
+                          {courseCard(slot)}
+                          {openPopover === slot.id && (
+                            <div
+                              className="absolute top-2 left-full ml-2 w-44 bg-surface-container-lowest border border-outline-variant rounded shadow-sm z-50 flex flex-col"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {editable && (
+                                <button
+                                  className="text-left px-3 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2"
+                                  onClick={() =>
+                                    setModal({ kind: "edit", slot })
+                                  }
+                                >
+                                  <Icon name="edit" size={16} /> Modifier
+                                </button>
+                              )}
+                              {!editable && !pastDay(slot.day_of_week) && (
+                                <button
+                                  className="text-left px-3 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2"
+                                  onClick={() =>
+                                    setModal({ kind: "swap", slot })
+                                  }
+                                >
+                                  <Icon name="swap_horiz" size={16} /> Demander
+                                  un échange
+                                </button>
+                              )}
+{editable && (
+                              <>
+                                <div className="h-px bg-outline-variant w-full" />
+                                <ConfirmButton
+                                  action={() => deleteSlot(slot.id)}
+                                  title="Supprimer le créneau"
+                                  message={`Supprimer « ${slot.subject_name} » (${formatTime(
+                                    slot.start_time
+                                  )} - ${formatTime(slot.end_time)}) de l'emploi du temps ?`}
+                                  confirmLabel="Supprimer"
+                                  className="justify-start px-3 py-2 w-full"
+                                  onSuccess={() => setOpenPopover(null)}
+                                >
+                                  Supprimer
+                                </ConfirmButton>
+                              </>
+                            )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -236,10 +316,12 @@ export function TimetableGrid({
           classId={classId}
           subjects={subjects}
           teachers={teachers}
+          subjectTeachers={subjectTeachers}
           dayOfWeek={modal.day}
           defaultStart={modal.start}
           defaultEnd={modal.end}
           currentUserId={user.id}
+          role={user.role}
           onClose={() => setModal(null)}
         />
       )}
@@ -250,11 +332,13 @@ export function TimetableGrid({
           classId={classId}
           subjects={subjects}
           teachers={teachers}
+          subjectTeachers={subjectTeachers}
           dayOfWeek={modal.slot.day_of_week}
           defaultStart={modal.slot.start_time}
           defaultEnd={modal.slot.end_time}
           slot={modal.slot}
           currentUserId={user.id}
+          role={user.role}
           onClose={() => setModal(null)}
         />
       )}
