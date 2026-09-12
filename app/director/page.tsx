@@ -5,6 +5,7 @@ import { getSwapRequestsForDirector } from "@/lib/actions/swaps";
 import { navItemsFor } from "@/lib/nav";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatCard } from "@/components/director/StatCard";
+import { CreateClassForm } from "@/components/director/CreateClassForm";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,14 +74,14 @@ export default async function DirectorPage() {
           label="Classes"
           value={stats.classes}
           icon="groups"
-          href="/director/classes"
+          href="/director"
           accent="tertiary"
         />
         <StatCard
           label="Matières"
           value={stats.subjects}
           icon="menu_book"
-          href="/director/classes"
+          href="/director"
           accent="error"
         />
         <StatCard
@@ -149,13 +150,7 @@ export default async function DirectorPage() {
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
             Classes
           </h2>
-          <Link
-            href="/director/classes"
-            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-          >
-            Gérer les classes
-            <Icon name="arrow_forward" size={16} />
-          </Link>
+          <CreateClassForm />
         </div>
         {classes.length === 0 ? (
           <Card className="p-5 text-sm text-muted-foreground">

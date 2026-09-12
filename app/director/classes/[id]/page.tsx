@@ -47,14 +47,14 @@ export default async function ClassDetailPage({
   return (
     <AppShell
       user={{ name: user.name, role: user.role }}
-      navItems={navItemsFor(user.role, "/director/classes")}
+      navItems={navItemsFor(user.role, "/director")}
     >
       <Link
-        href="/director/classes"
+        href="/director"
         className="inline-flex items-center gap-1.5 font-body-sm text-body-sm text-secondary hover:text-primary transition-colors w-fit"
       >
         <Icon name="arrow_back" size={18} />
-        Retour aux classes
+        Retour au tableau de bord
       </Link>
 
       <section className="card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -79,7 +79,7 @@ export default async function ClassDetailPage({
             name={schoolClass.name}
             action={deleteClass}
             label={`Supprimer ${schoolClass.name}`}
-            redirectTo="/director/classes"
+            redirectTo="/director"
           />
         </div>
       </section>
