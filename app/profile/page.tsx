@@ -17,32 +17,34 @@ export default async function ProfilePage() {
       user={{ name: user.name, role: user.role }}
       navItems={navItemsFor(user.role, "/profile")}
     >
-      <section className="flex flex-col gap-1">
-        <h1 className="font-headline-sm text-headline-sm font-bold text-on-surface">
-          Mon profil
-        </h1>
-        <p className="font-body-sm text-body-sm text-secondary">
-          Modifiez vos informations personnelles et votre mot de passe.
-        </p>
-      </section>
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 text-center">
+        <section className="flex flex-col gap-1">
+          <h1 className="font-headline-sm text-headline-sm font-bold text-on-surface">
+            Mon profil
+          </h1>
+          <p className="font-body-sm text-body-sm text-secondary">
+            Modifiez vos informations personnelles et votre mot de passe.
+          </p>
+        </section>
 
-      <ProfileForm
-        firstName={user.first_name}
-        lastName={user.last_name}
-        role={user.role}
-      />
+        <ProfileForm
+          firstName={user.first_name}
+          lastName={user.last_name}
+          role={user.role}
+        />
 
-      <div className="border-t border-border pt-4">
-        <form action={logout}>
-          <Button
-            type="submit"
-            variant="outline"
-            className="text-destructive hover:bg-destructive/10"
-          >
-            <Icon name="logout" size={16} />
-            Se déconnecter
-          </Button>
-        </form>
+        <div className="border-t border-border pt-4">
+          <form action={logout}>
+            <Button
+              type="submit"
+              variant="outline"
+              className="text-destructive hover:bg-destructive/10"
+            >
+              <Icon name="logout" size={16} />
+              Se déconnecter
+            </Button>
+          </form>
+        </div>
       </div>
     </AppShell>
   );
