@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
+import { logout } from "@/lib/actions/auth";
 import { navItemsFor } from "@/lib/nav";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProfileForm } from "@/components/profile/ProfileForm";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/Icon";
 
 export const metadata: Metadata = { title: "Mon profil" };
 
@@ -28,6 +31,19 @@ export default async function ProfilePage() {
         lastName={user.last_name}
         role={user.role}
       />
+
+      <div className="border-t border-border pt-4">
+        <form action={logout}>
+          <Button
+            type="submit"
+            variant="outline"
+            className="text-destructive hover:bg-destructive/10"
+          >
+            <Icon name="logout" size={16} />
+            Se déconnecter
+          </Button>
+        </form>
+      </div>
     </AppShell>
   );
 }
