@@ -79,6 +79,7 @@ export default async function ClassDetailPage({
             name={schoolClass.name}
             action={deleteClass}
             label={`Supprimer ${schoolClass.name}`}
+            redirectTo="/director/classes"
           />
         </div>
       </section>
