@@ -8,6 +8,7 @@ type DeleteActionButtonProps = {
   name: string;
   action: (id: string) => Promise<ActionResult>;
   label?: string;
+  redirectTo?: string;
 };
 
 export function DeleteActionButton({
@@ -15,6 +16,7 @@ export function DeleteActionButton({
   name,
   action,
   label,
+  redirectTo,
 }: DeleteActionButtonProps) {
   return (
     <ConfirmButton
@@ -28,6 +30,7 @@ export function DeleteActionButton({
       }
       confirmLabel="Supprimer"
       ariaLabel={label}
+      redirectTo={redirectTo}
     />
   );
 }

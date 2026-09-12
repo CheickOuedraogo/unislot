@@ -17,6 +17,7 @@ type ConfirmButtonProps = {
   className?: string;
   ariaLabel?: string;
   onSuccess?: () => void;
+  redirectTo?: string;
 };
 
 export function ConfirmButton({
@@ -29,6 +30,7 @@ export function ConfirmButton({
   className = "",
   ariaLabel,
   onSuccess,
+  redirectTo,
 }: ConfirmButtonProps) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +46,8 @@ export function ConfirmButton({
         setOpen(false);
         setError(null);
         onSuccess?.();
-        router.refresh();
+        if (redirectTo) router.push(redirectTo);
+        else router.refresh();
       }
     });
   };
