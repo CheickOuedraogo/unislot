@@ -7,7 +7,7 @@ import {
   rejectSwapRequest,
   type RemainderChoice,
 } from "@/lib/actions/swaps";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import type { SwapRequest } from "@/lib/types";
 import {
   formatDayOfWeek,
