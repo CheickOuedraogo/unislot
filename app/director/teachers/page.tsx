@@ -14,18 +14,19 @@ export default async function TeachersPage() {
       user={{ name: user.name, role: user.role }}
       navItems={navItemsFor(user.role, "/director/teachers")}
     >
-      <h1 className="font-headline-sm text-headline-sm font-bold text-on-surface">
-        Enseignants
-      </h1>
-
-      <CreateTeacherForm />
-
-      <section className="flex flex-col gap-4">
-        <h2 className="font-title-md text-title-md text-on-surface">
-          Liste des enseignants ({teachers.length})
-        </h2>
-        <TeachersTable teachers={teachers} />
+      <section className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Enseignants
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {teachers.length} enseignant{teachers.length > 1 ? "s" : ""}
+          </p>
+        </div>
+        <CreateTeacherForm />
       </section>
+
+      <TeachersTable teachers={teachers} />
     </AppShell>
   );
 }

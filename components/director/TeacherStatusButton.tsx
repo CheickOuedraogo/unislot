@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/Icon";
 import { setTeacherActive } from "@/lib/actions/auth";
 import type { ActionResult } from "@/lib/actions/auth";
@@ -40,37 +41,39 @@ export function TeacherStatusButton({
 
   if (isActive) {
     return (
-      <span className="inline-flex items-center gap-2">
+      <span className="flex items-center gap-2">
         {error && (
-          <span className="font-body-sm text-body-sm text-error">{error}</span>
+          <span className="text-sm text-destructive">{error}</span>
         )}
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={run}
           disabled={pending}
-          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-body-sm text-body-sm text-on-error bg-error hover:brightness-110 transition-all active:scale-95 disabled:opacity-50"
+          className="text-destructive hover:bg-destructive/10"
         >
           <Icon name={confirming ? "check" : "block"} size={16} />
           {confirming ? "Confirmer" : "Désactiver"}
-        </button>
+        </Button>
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="flex items-center gap-2">
       {error && (
-        <span className="font-body-sm text-body-sm text-error">{error}</span>
+        <span className="text-sm text-destructive">{error}</span>
       )}
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={run}
         disabled={pending}
-        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-body-sm text-body-sm text-on-success bg-success hover:brightness-110 transition-all active:scale-95 disabled:opacity-50"
+        className="text-success hover:bg-success/10"
       >
         <Icon name="person_check" size={16} />
         {pending ? "Enregistrement…" : "Activer"}
-      </button>
+      </Button>
     </span>
   );
 }

@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/ActionButton";
+import { Button as ActionButton } from "@/components/ui/ActionButton";
+import { Button } from "@/components/ui/button";
 import { deleteTeacher } from "@/lib/actions/auth";
 import type { ActionResult } from "@/lib/actions/auth";
 
@@ -33,17 +34,18 @@ export function DeleteTeacherButton({
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={() => {
           setError(null);
           setOpen(true);
         }}
-        className="inline-flex items-center gap-2 rounded-lg px-4 py-2 font-body-sm text-body-sm font-medium border border-error text-error hover:bg-error hover:text-on-error transition-all active:scale-95"
+        className="text-destructive hover:bg-destructive/10"
       >
-        <Icon name="delete" size={18} />
+        <Icon name="delete" size={16} />
         Supprimer cet enseignant
-      </button>
+      </Button>
 
       {open && (
         <Modal
@@ -51,16 +53,16 @@ export function DeleteTeacherButton({
           onClose={() => setOpen(false)}
           footer={
             <>
-              <Button
+              <ActionButton
                 variant="secondary"
                 onClick={() => setOpen(false)}
                 disabled={pending}
               >
                 Annuler
-              </Button>
-              <Button variant="dangerSolid" onClick={confirm} disabled={pending}>
+              </ActionButton>
+              <ActionButton variant="dangerSolid" onClick={confirm} disabled={pending}>
                 {pending ? "Suppression…" : "Supprimer"}
-              </Button>
+              </ActionButton>
             </>
           }
         >
