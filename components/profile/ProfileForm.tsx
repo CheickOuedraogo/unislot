@@ -38,7 +38,10 @@ export function ProfileForm({
   );
 
   return (
-    <form action={action} className="flex flex-col gap-5">
+    <form
+      action={action}
+      className="flex flex-col gap-5 border border-outline-variant rounded-xl bg-surface-container-lowest p-6 max-w-3xl"
+    >
       <h2 className="font-title-md text-title-md text-on-surface">
         Mon profil
       </h2>
