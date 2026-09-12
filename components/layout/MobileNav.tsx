@@ -15,7 +15,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Icon } from "@/components/ui/Icon";
-import { logout } from "@/lib/actions/auth";
 import { ROLE_LABELS } from "@/lib/constants";
 import type { NavItem } from "./TopNavBar";
 import type { Role } from "@/lib/types";
@@ -103,17 +102,6 @@ export function MobileNav({ navItems, user }: MobileNavProps) {
                   {ROLE_LABELS[user.role]}
                 </p>
               </div>
-              <form action={logout}>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:bg-destructive/10"
-                  aria-label="Se déconnecter"
-                >
-                  <Icon name="logout" size={18} />
-                </Button>
-              </form>
             </div>
           </div>
         )}
