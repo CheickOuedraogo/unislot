@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useId } from "react";
 import { Icon } from "./Icon";
 
 type ModalProps = {
@@ -8,8 +11,21 @@ type ModalProps = {
 };
 
 export function Modal({ title, onClose, children, footer }: ModalProps) {
+  const titleId = useId();
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
       className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-overlay"
       onClick={onClose}
     >
@@ -18,7 +34,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface">
-          <h2 className="font-headline-md text-headline-md text-on-surface">
+          <h2 id={titleId} className="font-headline-md text-headline-md text-on-surface">
             {title}
           </h2>
           <button
