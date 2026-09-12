@@ -12,7 +12,7 @@ import { parseWeekStart, formatWeekRange } from "@/lib/utils";
 import { AppShell } from "@/components/layout/AppShell";
 import { ClassSelector } from "@/components/timetable/ClassSelector";
 import { WeekNavigator } from "@/components/timetable/WeekNavigator";
-import { TimetableGrid } from "@/components/timetable/TimetableGrid";
+import { TimetableClient } from "@/components/timetable/TimetableClient";
 import { ExportPdfButton } from "@/components/timetable/ExportPdfButton";
 
 export const metadata: Metadata = {
@@ -92,7 +92,7 @@ export default async function TimetablePage({ searchParams }: Props) {
             />
           </div>
         </div>
-        <TimetableGrid
+        <TimetableClient
           slots={slots}
           subjects={subjects}
           teachers={teachers}
