@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cancelSwapRequest } from "@/lib/actions/swaps";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import type { SwapRequest } from "@/lib/types";
 import { formatDayOfWeek, formatDayDate, isDayInPast } from "@/lib/utils";
 

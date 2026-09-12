@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import { Alert } from "@/components/ui/Alert";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -40,7 +40,7 @@ export function ProfileForm({
   return (
     <form
       action={action}
-      className="flex flex-col gap-4 border border-outline-variant rounded-xl bg-surface-container-lowest p-5 max-w-2xl"
+      className="flex w-full flex-col gap-5 border border-outline-variant rounded-xl bg-surface-container-lowest p-6"
     >
       <h2 className="font-title-md text-title-md text-on-surface">
         Mon profil

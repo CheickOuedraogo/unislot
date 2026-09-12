@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { deleteAssignment, createAssignment } from "@/lib/actions/assignments";

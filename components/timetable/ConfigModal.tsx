@@ -8,7 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, inputClass } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { Icon } from "@/components/ui/Icon";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import { createSlot, updateSlot, type SlotInput } from "@/lib/actions/slots";
 import type { ActionResult } from "@/lib/actions/auth";
 

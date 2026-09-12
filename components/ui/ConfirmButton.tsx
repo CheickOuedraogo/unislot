@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "./Icon";
 import { Modal } from "./Modal";
-import { Button } from "./Button";
+import { Button } from "./ActionButton";
 import type { ActionResult } from "@/lib/actions/auth";
 
 type ConfirmButtonProps = {
