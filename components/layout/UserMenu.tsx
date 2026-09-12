@@ -15,18 +15,20 @@ function initialsOf(name: string): string {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
+  const firstName = user.name.split(" ").filter(Boolean)[0] || user.name;
+
   return (
     <Link
       href="/profile"
       title="Mon profil"
       className="flex items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm font-medium text-foreground transition-colors outline-none hover:bg-accent"
     >
-      <Avatar className="size-7">
-        <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+      <Avatar>
+        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold leading-none">
           {initialsOf(user.name)}
         </AvatarFallback>
       </Avatar>
-      <span className="hidden md:inline">{user.name}</span>
+      <span className="hidden md:inline">{firstName}</span>
     </Link>
   );
 }
