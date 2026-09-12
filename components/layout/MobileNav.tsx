@@ -3,57 +3,122 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Icon } from "@/components/ui/Icon";
 import { logout } from "@/lib/actions/auth";
+import { ROLE_LABELS } from "@/lib/constants";
+import { Brand } from "./Brand";
 import type { NavItem } from "./TopNavBar";
+import type { Role } from "@/lib/types";
 
 type MobileNavProps = {
   navItems: NavItem[];
+  user?: { name: string; role: Role };
 };
 
-export function MobileNav({ navItems }: MobileNavProps) {
-  const [open, setOpen] = useState(false);
+function initialsOf(name: string): string {
+  const parts = name.split(" ").filter(Boolean);
+  const initials = (parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "");
+  return initials ? initials.toUpperCase() : name.slice(0, 2).toUpperCase();
+}
+
+export function MobileNav({ navItems, user }: MobileNavProps) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
   const isActive = (item: NavItem) =>
     item.active ?? (item.href !== "/" && pathname.startsWith(item.href));
 
   return (
-    <div className="md:hidden relative">
-      <button
-        aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className="p-2 rounded-lg text-secondary hover:text-primary hover:bg-surface-container transition-colors"
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground"
+            aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
+          />
+        }
       >
-        <Icon name={open ? "close" : "menu"} />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg z-50 p-2 flex flex-col gap-1">
+        <Icon name="menu" size={20} />
+      </SheetTrigger>
+      <SheetContent side="right" className="w-72 gap-0 sm:w-80">
+        <SheetHeader className="border-b border-border">
+          <SheetTitle>
+            <span className="inline-flex items-center gap-2">
+              <Brand />
+            </span>
+          </SheetTitle>
+          <SheetDescription className="sr-only">
+            Menu de navigation
+          </SheetDescription>
+        </SheetHeader>
+
+        <nav className="flex flex-col gap-1 p-3">
           {navItems.map((item) => (
-            <Link
+            <SheetClose
               key={item.href}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-lg font-body-sm text-body-sm transition-colors ${
-                isActive(item)
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-secondary hover:bg-surface-container hover:text-on-surface"
-              }`}
+              render={
+                <Link
+                  href={item.href}
+                  className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    isActive(item)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  }`}
+                />
+              }
             >
               {item.label}
-              <Icon name="chevron_right" size={16} className="opacity-60" />
-            </Link>
+              {isActive(item) && (
+                <Icon name="circle" size={6} fill className="text-primary" />
+              )}
+            </SheetClose>
           ))}
-          <div className="h-px bg-outline-variant my-1" />
-          <form action={logout}>
-            <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg font-body-sm text-body-sm text-error hover:bg-error-container transition-colors">
-              <Icon name="logout" size={16} />
-              Se déconnecter
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
+        </nav>
+
+        {user && (
+          <div className="mt-auto border-t border-border p-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="size-9">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                  {initialsOf(user.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {user.name}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {ROLE_LABELS[user.role]}
+                </p>
+              </div>
+              <form action={logout}>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:bg-destructive/10"
+                  aria-label="Se déconnecter"
+                >
+                  <Icon name="logout" size={18} />
+                </Button>
+              </form>
+            </div>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }

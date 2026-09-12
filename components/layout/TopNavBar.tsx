@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Icon } from "@/components/ui/Icon";
 import { MobileNav } from "./MobileNav";
-import { logout } from "@/lib/actions/auth";
+import { ThemeToggle } from "./ThemeToggle";
+import { UserMenu } from "./UserMenu";
+import { Brand } from "./Brand";
 import type { Role } from "@/lib/types";
 
 export type NavItem = {
@@ -18,18 +19,25 @@ type TopNavBarProps = {
 
 export function TopNavBar({ navItems, user, children }: TopNavBarProps) {
   return (
-    <header className="bg-surface-container-lowest dark:bg-on-background border-b border-outline-variant dark:border-outline sticky top-0 z-50 shrink-0">
-      <div className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto h-grid-row-height">
-        <div className="flex items-center gap-gutter min-w-0">
-          <nav className="hidden md:flex gap-unit items-center h-full">
+    <header className="sticky top-0 z-50 shrink-0 border-b border-border bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-14 w-full max-w-container-max items-center justify-between gap-2 px-margin-mobile md:px-margin-desktop">
+        <div className="flex min-w-0 items-center gap-2">
+          <Link
+            href="/"
+            aria-label="Accueil UniTime"
+            className="flex shrink-0 items-center rounded-lg py-1.5 pr-2 transition-colors hover:bg-accent"
+          >
+            <Brand />
+          </Link>
+          <nav className="ml-2 hidden items-center gap-0.5 md:flex">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className={`h-full flex items-center px-unit transition-colors duration-200 active:scale-95 ${
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   item.active
-                    ? "text-primary dark:text-inverse-primary border-b-2 border-primary dark:border-inverse-primary pb-1"
-                    : "text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-inverse-surface"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 {item.label}
@@ -38,19 +46,12 @@ export function TopNavBar({ navItems, user, children }: TopNavBarProps) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-gutter">
-          {user && (
-            <form action={logout}>
-              <button
-                aria-label="Se déconnecter"
-                className="hidden sm:inline-flex items-center gap-1.5 font-body-sm text-body-sm text-secondary hover:text-error transition-colors hover:bg-error-container rounded-lg px-2 py-1.5"
-              >
-                <Icon name="logout" size={16} />
-                Se déconnecter
-              </button>
-            </form>
-          )}
-          <MobileNav navItems={navItems} />
+        <div className="flex items-center gap-0.5">
+          <ThemeToggle />
+          {user && <UserMenu user={user} />}
+          <div className="md:hidden">
+            <MobileNav navItems={navItems} user={user} />
+          </div>
           {children}
         </div>
       </div>

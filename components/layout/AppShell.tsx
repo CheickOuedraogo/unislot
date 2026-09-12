@@ -9,7 +9,7 @@ type AppShellProps = {
 
 export function AppShell({ user, navItems, children }: AppShellProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-surface-container">
+    <div className="min-h-screen flex flex-col bg-muted/40">
       <TopNavBar
         navItems={navItems}
         user={{ name: user.name, role: user.role }}
