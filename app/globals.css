@@ -110,6 +110,37 @@ body {
   font-family: var(--font-sans);
 }
 
+/* ---- Mise à l'échelle fluide (proportionnelle à l'écran) ---- */
+.profile-panel {
+  font-size: clamp(0.9375rem, 0.75rem + 0.4vw, 1.25rem);
+  gap: clamp(1rem, 0.75rem + 0.5vw, 1.75rem);
+}
+.profile-panel h1 {
+  font-size: clamp(1.625rem, 1.125rem + 0.9vw, 2.5rem);
+}
+.profile-panel h2 {
+  font-size: clamp(1.125rem, 0.875rem + 0.5vw, 1.5rem);
+  line-height: 1.2;
+}
+.profile-panel p {
+  font-size: clamp(0.9375rem, 0.75rem + 0.35vw, 1.125rem);
+}
+.profile-panel label {
+  font-size: clamp(0.8125rem, 0.6875rem + 0.3vw, 1rem);
+}
+.profile-panel input {
+  font-size: clamp(0.9375rem, 0.75rem + 0.4vw, 1.25rem);
+  padding-block: clamp(0.5rem, 0.375rem + 0.35vw, 0.875rem);
+  padding-inline: clamp(0.75rem, 0.625rem + 0.25vw, 1.125rem);
+}
+.profile-panel button {
+  font-size: clamp(0.9375rem, 0.75rem + 0.4vw, 1.25rem);
+  padding-block: clamp(0.5rem, 0.375rem + 0.35vw, 0.875rem);
+}
+.profile-panel hr {
+  margin-block: clamp(1rem, 0.5rem + 0.8vw, 1.75rem);
+}
+
 button:not(:disabled),
 [role="button"]:not(:disabled),
 select:not(:disabled),
