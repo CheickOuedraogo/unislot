@@ -28,6 +28,7 @@ type TimetableGridProps = {
   classId: string;
   weekStart: string;
   user: { id: string; role: Role; name: string };
+  selectedDay?: number | null;
 };
 
 type ModalState =
@@ -109,6 +110,7 @@ export function TimetableGrid({
   classId,
   weekStart,
   user,
+  selectedDay = null,
 }: TimetableGridProps) {
   const [modal, setModal] = useState<ModalState>(null);
   const [openPopover, setOpenPopover] = useState<string | null>(null);
@@ -150,24 +152,33 @@ export function TimetableGrid({
 
   return (
     <div className="p-4 flex-1 overflow-x-auto overflow-y-auto">
-      <div className="min-w-[720px] max-w-container-max mx-auto bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
-        <div className="timetable-grid">
+      <div className={`${selectedDay !== null ? "min-w-0 md:min-w-[720px]" : "min-w-[720px]"} max-w-container-max mx-auto bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden`}>
+        <div className={`timetable-grid ${selectedDay !== null ? "timetable-grid-single" : ""}`}>
           <div
             className="bg-surface border-b border-r border-outline-variant"
             style={{ gridColumn: 1, gridRow: 1 }}
           />
-          {weekDays.map((day, col) => (
-            <div
-              key={day.iso}
-              className={`bg-surface border-b ${
-                col < weekDays.length - 1 ? "border-r " : ""
-              }border-outline-variant p-2 text-center font-label-caps text-label-caps text-secondary flex flex-col justify-center`}
-              style={{ gridColumn: col + 2, gridRow: 1 }}
-            >
-              <span className="font-bold text-on-surface">{day.label}</span>
-              <span>{day.date}</span>
-            </div>
-          ))}
+          {weekDays.map((day, col) => {
+            const isActive = selectedDay === null || selectedDay === col;
+            return (
+              <div
+                key={day.iso}
+                className={`bg-surface border-b ${
+                  col < weekDays.length - 1 ? "border-r " : ""
+                }border-outline-variant p-2 text-center font-label-caps text-label-caps text-secondary flex flex-col justify-center ${
+                  selectedDay !== null
+                    ? isActive
+                      ? "day-header-active"
+                      : "day-header"
+                    : ""
+                }`}
+                style={{ gridColumn: col + 2, gridRow: 1 }}
+              >
+                <span className="font-bold text-on-surface">{day.label}</span>
+                <span>{day.date}</span>
+              </div>
+            );
+          })}
           {hours.map((hour, hourIndex) => {
             return (
               <Fragment key={hour}>
@@ -186,12 +197,19 @@ export function TimetableGrid({
 
                   const covered = coveredHour(dayOfWeek, hour);
                   const past = pastDay(dayOfWeek);
+                  const isActive = selectedDay === null || selectedDay === col;
 
                   return (
                     <div
                       key={`${hour}-${col}`}
                       className={`grid-cell ${cellBorder}${
                         covered || past ? " pointer-events-none" : ""
+                      } ${
+                        selectedDay !== null
+                          ? isActive
+                            ? "day-cell-active"
+                            : "day-cell"
+                          : ""
                       }`}
                       style={{
                         gridColumn: col + 2,
@@ -216,7 +234,7 @@ export function TimetableGrid({
           })}
 
           <div
-            className="pointer-events-none relative"
+            className="pointer-events-none relative day-overlay-layer"
             style={{
               gridColumn: `2 / ${GRID_DAYS.length + 2}`,
               gridRow: `2 / ${hours.length + 2}`,
@@ -225,10 +243,17 @@ export function TimetableGrid({
             {GRID_DAYS.map((day, col) => {
               const entries = slotsByDay.get(day);
               if (!entries) return null;
+              const isActive = selectedDay === null || selectedDay === col;
               return (
                 <div
                   key={day}
-                  className="absolute top-0 bottom-0"
+                  className={`absolute top-0 bottom-0 ${
+                    selectedDay !== null
+                      ? isActive
+                        ? "day-overlay-col-active"
+                        : "day-overlay-col"
+                      : ""
+                  }`}
                   style={{ left: `${col * (100 / 6)}%`, width: `${100 / 6}%` }}
                 >
                   <div className="relative h-full">

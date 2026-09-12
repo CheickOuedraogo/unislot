@@ -16,7 +16,7 @@ import { StatCards } from "@/components/teacher/StatCards";
 import { MySwapRequests } from "@/components/teacher/MySwapRequests";
 import { ClassSelector } from "@/components/timetable/ClassSelector";
 import { WeekNavigator } from "@/components/timetable/WeekNavigator";
-import { TimetableGrid } from "@/components/timetable/TimetableGrid";
+import { TimetableClient } from "@/components/timetable/TimetableClient";
 import { ExportPdfButton } from "@/components/timetable/ExportPdfButton";
 
 export const metadata: Metadata = {
@@ -104,7 +104,7 @@ export default async function TeacherDashboard({ searchParams }: Props) {
             </div>
           </div>
 
-          <TimetableGrid
+          <TimetableClient
             slots={await getSlotsForClass(selectedId)}
             subjects={await getSubjectsForClass(user, selectedId)}
             teachers={await getAllTeachers()}
