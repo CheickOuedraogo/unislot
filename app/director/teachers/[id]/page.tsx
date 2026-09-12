@@ -10,7 +10,10 @@ import {
 } from "@/lib/queries";
 import { navItemsFor } from "@/lib/nav";
 import { AppShell } from "@/components/layout/AppShell";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/Icon";
+import { TeacherStatusBadge } from "@/components/director/TeacherStatus";
 import { EditTeacherForm } from "@/components/director/EditTeacherForm";
 import { TeacherStatusButton } from "@/components/director/TeacherStatusButton";
 import { DeleteTeacherButton } from "@/components/director/DeleteTeacherButton";
@@ -57,72 +60,61 @@ export default async function TeacherDetailPage({
     >
       <Link
         href="/director/teachers"
-        className="inline-flex items-center gap-1.5 font-body-sm text-body-sm text-secondary hover:text-primary transition-colors w-fit"
+        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
       >
         <Icon name="arrow_back" size={18} />
         Retour aux enseignants
       </Link>
 
-      <section className="card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center gap-5">
-        <span
-          className="inline-flex items-center justify-center size-14 shrink-0 rounded-2xl bg-primary text-on-primary font-headline-md text-headline-md font-bold"
-          aria-hidden="true"
-        >
-          {initials(teacher.first_name, teacher.last_name)}
-        </span>
-        <div className="flex-1 min-w-0">
+      <Card className="flex flex-col items-start gap-5 p-6 md:flex-row md:items-center">
+        <Avatar className="size-14">
+          <AvatarFallback className="bg-primary text-lg font-bold text-primary-foreground">
+            {initials(teacher.first_name, teacher.last_name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-headline-sm text-headline-sm font-bold text-on-surface">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               {teacher.name}
             </h1>
-            {teacher.is_active ? (
-              <span className="inline-flex items-center gap-1.5 font-body-sm text-body-sm text-on-success bg-success rounded-full px-2.5 py-0.5">
-                <span className="size-1.5 rounded-full bg-on-success" />
-                Actif
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 font-body-sm text-body-sm text-on-error bg-error rounded-full px-2.5 py-0.5">
-                <span className="size-1.5 rounded-full bg-on-error" />
-                Inactif
-              </span>
-            )}
+            <TeacherStatusBadge active={teacher.is_active} />
           </div>
-          <p className="font-body-sm text-body-sm text-secondary mt-1 truncate">
+          <p className="mt-0.5 truncate text-sm text-muted-foreground">
             {teacher.email}
           </p>
         </div>
         <TeacherStatusButton id={teacher.id} isActive={teacher.is_active} />
-      </section>
+      </Card>
 
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
-        <div className="card bg-surface-container-lowest border border-outline-variant rounded-xl p-5 flex flex-col gap-1">
-          <span className="font-label-caps text-label-caps text-secondary uppercase tracking-wider">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card className="flex flex-col gap-1 p-5">
+          <span className="text-xs tracking-wider text-muted-foreground uppercase">
             Heures totales
           </span>
-          <span className="font-headline-md text-headline-md font-bold text-on-surface">
+          <span className="text-2xl font-bold tracking-tight text-foreground">
             {Math.round(stats.totalHours * 100) / 100} h
           </span>
-        </div>
-        <div className="card bg-surface-container-lowest border border-outline-variant rounded-xl p-5 flex flex-col gap-1">
-          <span className="font-label-caps text-label-caps text-secondary uppercase tracking-wider">
+        </Card>
+        <Card className="flex flex-col gap-1 p-5">
+          <span className="text-xs tracking-wider text-muted-foreground uppercase">
             Classes assignées
           </span>
-          <span className="font-headline-md text-headline-md font-bold text-on-surface">
+          <span className="text-2xl font-bold tracking-tight text-foreground">
             {classCount}
           </span>
-        </div>
-        <div className="card bg-surface-container-lowest border border-outline-variant rounded-xl p-5 flex flex-col gap-1">
-          <span className="font-label-caps text-label-caps text-secondary uppercase tracking-wider">
+        </Card>
+        <Card className="flex flex-col gap-1 p-5">
+          <span className="text-xs tracking-wider text-muted-foreground uppercase">
             Matières assignées
           </span>
-          <span className="font-headline-md text-headline-md font-bold text-on-surface">
+          <span className="text-2xl font-bold tracking-tight text-foreground">
             {teacher.assignments.length}
           </span>
-        </div>
+        </Card>
       </section>
 
-      <section className="card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4">
-        <h2 className="font-title-md text-title-md text-on-surface">
+      <Card className="flex flex-col gap-4 p-6">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
           Matières et classes
         </h2>
         <TeacherAssignments
@@ -131,27 +123,27 @@ export default async function TeacherDetailPage({
           subjectsByClass={subjectsByClass}
           classes={classes}
         />
-      </section>
+      </Card>
 
-      <section className="card bg-surface-container-lowest border border-outline-variant rounded-xl p-6">
+      <Card className="p-6">
         <EditTeacherForm
           userId={teacher.id}
           firstName={teacher.first_name}
           lastName={teacher.last_name}
           email={teacher.email}
         />
-      </section>
+      </Card>
 
-      <section className="border border-error/40 rounded-xl bg-error-container/30 p-6 flex flex-col gap-3">
-        <h2 className="font-title-md text-title-md text-on-surface">
+      <Card className="flex flex-col gap-3 border-destructive/30 bg-destructive/5 p-6">
+        <h2 className="text-base font-semibold text-destructive">
           Zone dangereuse
         </h2>
-        <p className="font-body-sm text-body-sm text-secondary">
+        <p className="text-sm text-muted-foreground">
           La suppression est définitive et ne peut pas être annulée. Les
           assignations associées seront également supprimées.
         </p>
         <DeleteTeacherButton id={teacher.id} name={teacher.name} />
-      </section>
+      </Card>
     </AppShell>
   );
 }

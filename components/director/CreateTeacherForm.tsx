@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/ActionButton";
+import { Button as ActionButton } from "@/components/ui/ActionButton";
+import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/Alert";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -44,10 +45,8 @@ export function CreateTeacherForm() {
 
   return (
     <>
-      <div>
-        <Button icon="add" onClick={() => setOpen(true)}>
-          Ajouter un enseignant
-        </Button>
+      <div className="md:self-end">
+        <Button onClick={() => setOpen(true)}>Ajouter un enseignant</Button>
       </div>
       {open && (
         <Modal
@@ -55,12 +54,12 @@ export function CreateTeacherForm() {
           onClose={() => setOpen(false)}
           footer={
             <>
-              <Button variant="secondary" onClick={() => setOpen(false)}>
+              <ActionButton variant="secondary" onClick={() => setOpen(false)}>
                 Annuler
-              </Button>
-              <Button onClick={submit} disabled={pending}>
+              </ActionButton>
+              <ActionButton onClick={submit} disabled={pending}>
                 {pending ? "Création…" : "Créer le compte"}
-              </Button>
+              </ActionButton>
             </>
           }
         >
