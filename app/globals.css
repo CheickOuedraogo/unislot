@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @font-face {
   font-family: "Material Symbols Outlined";
   font-style: normal;
@@ -421,40 +419,6 @@ tbody tr:hover {
   --sidebar-accent-foreground: #191c1d;
   --sidebar-border: #e1e3e4;
   --sidebar-ring: #4f46e5;
-}
-
-.dark {
-  --background: #141517;
-  --foreground: #e7e8e9;
-  --card: #1d1f21;
-  --card-foreground: #e7e8e9;
-  --popover: #1d1f21;
-  --popover-foreground: #e7e8e9;
-  --primary: #c3c0ff;
-  --primary-foreground: #0f0069;
-  --secondary: #a8adb5;
-  --secondary-foreground: #141517;
-  --muted: #1d1f21;
-  --muted-foreground: #a8adb5;
-  --accent: #2e3132;
-  --accent-foreground: #e7e8e9;
-  --destructive: #f87171;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.16);
-  --ring: #c3c0ff;
-  --chart-1: #c3c0ff;
-  --chart-2: #059669;
-  --chart-3: #d97706;
-  --chart-4: #f87171;
-  --chart-5: #94a3b8;
-  --sidebar: #1d1f21;
-  --sidebar-foreground: #e7e8e9;
-  --sidebar-primary: #c3c0ff;
-  --sidebar-primary-foreground: #0f0069;
-  --sidebar-accent: #2e3132;
-  --sidebar-accent-foreground: #e7e8e9;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #c3c0ff;
 }
 
 @layer base {

@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { MobileNav } from "./MobileNav";
-import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
-import { Brand } from "./Brand";
 import type { Role } from "@/lib/types";
 
 export type NavItem = {
@@ -22,14 +20,7 @@ export function TopNavBar({ navItems, user, children }: TopNavBarProps) {
     <header className="sticky top-0 z-50 shrink-0 border-b border-border bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 w-full max-w-container-max items-center justify-between gap-2 px-margin-mobile md:px-margin-desktop">
         <div className="flex min-w-0 items-center gap-2">
-          <Link
-            href="/"
-            aria-label="Accueil UniTime"
-            className="flex shrink-0 items-center rounded-lg py-1.5 pr-2 transition-colors hover:bg-accent"
-          >
-            <Brand />
-          </Link>
-          <nav className="ml-2 hidden items-center gap-0.5 md:flex">
+          <nav className="hidden items-center gap-0.5 md:flex">
             {navItems.map((item) => (
               <Link
                 key={item.label}
@@ -47,7 +38,6 @@ export function TopNavBar({ navItems, user, children }: TopNavBarProps) {
         </div>
 
         <div className="flex items-center gap-0.5">
-          <ThemeToggle />
           {user && <UserMenu user={user} />}
           <div className="md:hidden">
             <MobileNav navItems={navItems} user={user} />

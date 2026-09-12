@@ -17,7 +17,6 @@ import {
 import { Icon } from "@/components/ui/Icon";
 import { logout } from "@/lib/actions/auth";
 import { ROLE_LABELS } from "@/lib/constants";
-import { Brand } from "./Brand";
 import type { NavItem } from "./TopNavBar";
 import type { Role } from "@/lib/types";
 
@@ -56,8 +55,8 @@ export function MobileNav({ navItems, user }: MobileNavProps) {
       <SheetContent side="right" className="w-72 gap-0 sm:w-80">
         <SheetHeader className="border-b border-border">
           <SheetTitle>
-            <span className="inline-flex items-center gap-2">
-              <Brand />
+            <span className="text-sm font-semibold tracking-tight text-foreground">
+              UniTime
             </span>
           </SheetTitle>
           <SheetDescription className="sr-only">
