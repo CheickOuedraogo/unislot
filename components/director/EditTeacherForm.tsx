@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/Alert";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -36,11 +36,8 @@ export function EditTeacherForm({
   );
 
   return (
-    <form
-      action={action}
-      className="flex flex-col gap-4 border border-outline-variant rounded-xl bg-surface-container-lowest p-5"
-    >
-      <h2 className="font-title-md text-title-md text-on-surface">
+    <form action={action} className="flex flex-col gap-4">
+      <h2 className="text-lg font-semibold tracking-tight text-foreground">
         Modifier les informations
       </h2>
       <Alert state={state} />

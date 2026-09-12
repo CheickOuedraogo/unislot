@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { inputClass } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import { createSwapRequest } from "@/lib/actions/swaps";
 import type { ActionResult } from "@/lib/actions/auth";
 import type { Slot, Subject } from "@/lib/types";

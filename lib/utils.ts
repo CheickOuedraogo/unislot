@@ -1,3 +1,5 @@
+export { cn } from "cn"
+
 import { DAY_LABELS, DAY_LABELS_FULL } from "./constants";
 
 export function randomId(): string {
