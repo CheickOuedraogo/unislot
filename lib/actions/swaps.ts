@@ -100,7 +100,7 @@ export async function createSwapRequest(input: SwapRequestInput): Promise<Action
      VALUES ($1, $2, $3, $4, $5, $6)`,
     [slotId, user.id, message.trim(), proposedSubjectId, start, end]
   );
-  revalidatePaths(["/timetable", "/teacher", "/director/swaps"]);
+  revalidatePaths(["/timetable", "/teacher", "/director", "/director/swaps"]);
   return { success: "Demande envoyée." };
 }
 
@@ -267,7 +267,7 @@ export async function approveSwapRequest(
 
   if (alreadyDecided) return { error: "Cette demande n'est plus en attente." };
 
-  revalidatePaths(["/timetable", "/teacher", "/director/swaps"]);
+  revalidatePaths(["/timetable", "/teacher", "/director", "/director/swaps"]);
   return { success: "Demande approuvée : l'emploi du temps a été mis à jour." };
 }
 
@@ -281,7 +281,7 @@ export async function rejectSwapRequest(requestId: string): Promise<ActionResult
   );
   if (!rowCount) return { error: "Cette demande n'est plus en attente." };
 
-  revalidatePaths(["/timetable", "/teacher", "/director/swaps"]);
+  revalidatePaths(["/timetable", "/teacher", "/director", "/director/swaps"]);
   return { success: "Demande refusée." };
 }
 
@@ -294,7 +294,7 @@ export async function cancelSwapRequest(requestId: string): Promise<ActionResult
   );
   if (!rowCount) return { error: "Cette demande n'est plus en attente." };
 
-  revalidatePaths(["/timetable", "/teacher", "/director/swaps"]);
+  revalidatePaths(["/timetable", "/teacher", "/director", "/director/swaps"]);
   return { success: "Demande annulée." };
 }
 
