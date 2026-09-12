@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import { Modal } from "@/components/ui/Modal";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";

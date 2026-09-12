@@ -4,7 +4,7 @@ import { getDirectorStats, getClassesWithStats } from "@/lib/queries";
 import { navItemsFor } from "@/lib/nav";
 import { AppShell } from "@/components/layout/AppShell";
 import { StatCard } from "@/components/director/StatCard";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import { Icon } from "@/components/ui/Icon";
 
 function todayLabel(): string {

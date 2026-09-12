@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import { Alert } from "@/components/ui/Alert";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { PasswordInput } from "@/components/ui/PasswordInput";

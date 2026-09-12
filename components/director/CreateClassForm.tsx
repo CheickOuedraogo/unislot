@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/ActionButton";
 import { Alert } from "@/components/ui/Alert";
 import { Field, inputClassLg } from "@/components/ui/Field";
 import { createClass } from "@/lib/actions/classes";
