@@ -67,6 +67,7 @@ export function MobileNav({ navItems, user }: MobileNavProps) {
           {navItems.map((item) => (
             <SheetClose
               key={item.href}
+              nativeButton={false}
               render={
                 <Link
                   href={item.href}
