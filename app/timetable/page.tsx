@@ -89,6 +89,7 @@ export default async function TimetablePage({ searchParams }: Props) {
               slots={slots}
               className={selectedClass?.name ?? ""}
               weekLabel={formatWeekRange(weekStart)}
+              weekStart={weekStart.toISOString().slice(0, 10)}
             />
           </div>
         </div>

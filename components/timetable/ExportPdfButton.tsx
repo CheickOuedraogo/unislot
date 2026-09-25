@@ -4,249 +4,410 @@ import { useState } from "react";
 import { Button } from "@/components/ui/ActionButton";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
-import { courseTypeLabels, GRID_DAYS } from "@/lib/constants";
-import { formatDayOfWeek } from "@/lib/utils";
+import { DEFAULT_INSTITUTION, getAcademicYear } from "@/lib/constants";
 import type { Slot } from "@/lib/types";
 
-type ExportPdfButtonProps = {
+/* ------------------------------------------------------------------ */
+/* Constantes de mise en page                                          */
+/* ------------------------------------------------------------------ */
+
+const PAGE_W = 842; // A4 paysage en points
+const PAGE_H = 595;
+const PAD = 16;
+const CONTENT_W = PAGE_W - PAD * 2;
+const CONTENT_H = PAGE_H - PAD * 2;
+const TIME_COL_W = 88;
+
+/** Nombre de cours affichés au maximum dans une case (au-delà : "+N"). */
+const MAX_PER_CELL = 4;
+
+/** Tailles de texte de référence : on ne descend en dessous qu'en dernier recours. */
+const FS_TITLE = 9.5;
+const FS_META = 8.5;
+
+const DAY_LABELS = [
+  "Lundi",
+  "Mardi",
+  "Mercredi",
+  "Jeudi",
+  "Vendredi",
+  "Samedi",
+  "Dimanche",
+];
+
+/** Les deux bandes fixes de la journée (pas de ligne "Pause"). */
+const BANDS = [
+  { key: "am", label: "7h – 12h30", start: 7 * 60, end: 12 * 60 + 30 },
+  { key: "pm", label: "15h – 18h", start: 15 * 60, end: 18 * 60 },
+] as const;
+
+const TYPE_LABELS: Record<Slot["type"], string> = {
+  cours: "Cours",
+  td: "TD",
+  tp: "TP",
+  devoir: "Devoir",
+};
+
+const RED = "#C0111F";
+const INK = "#111827";
+const MUTED = "#4B5563";
+
+/* ------------------------------------------------------------------ */
+/* Utilitaires                                                         */
+/* ------------------------------------------------------------------ */
+
+const toMin = (t: string) => {
+  const [h, m] = (t ?? "0:0").split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+
+const fmtH = (m: number) => {
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return mm ? `${h}h${String(mm).padStart(2, "0")}` : `${h}h`;
+};
+
+/** Nombre de lignes estimé pour un texte dans une largeur donnée. */
+const linesOf = (text: string, width: number, fontSize: number) =>
+  Math.max(1, Math.ceil((text.length * fontSize * 0.5) / Math.max(width, 1)));
+
+type Card = {
+  slot: Slot;
+  title: string;
+  profs: string;
+  time: string | null;
+  isDevoir: boolean;
+};
+
+function bandIndexFor(start: number, end: number) {
+  let best = 0;
+  let bestScore = -Infinity;
+  BANDS.forEach((b, i) => {
+    const overlap = Math.min(end, b.end) - Math.max(start, b.start);
+    const mid = (start + end) / 2;
+    const distance = Math.abs(mid - (b.start + b.end) / 2);
+    const score = overlap > 0 ? overlap * 1000 : -distance;
+    if (score > bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  });
+  return best;
+}
+
+function buildCard(slot: Slot): Card {
+  const start = toMin(slot.start_time);
+  const end = toMin(slot.end_time);
+  const band = BANDS[bandIndexFor(start, end)];
+  const exact = start === band.start && end === band.end;
+  return {
+    slot,
+    title: `${TYPE_LABELS[slot.type]} : ${slot.subject_name}`,
+    profs: (slot.professors ?? []).map((p) => p.name).join(", "),
+    time: exact ? null : `${fmtH(start)} – ${fmtH(end)}`,
+    isDevoir: slot.type === "devoir",
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Composant                                                           */
+/* ------------------------------------------------------------------ */
+
+export interface ExportPdfButtonProps {
   slots: Slot[];
   className: string;
   weekLabel: string;
-};
-
-type Col = { start: string; end: string; label: string };
-
-const COLUMNS: Col[] = [
-  { start: "08:00", end: "10:00", label: "8h - 10h" },
-  { start: "10:00", end: "12:00", label: "10h - 12h" },
-  { start: "14:00", end: "16:00", label: "14h - 16h" },
-  { start: "16:00", end: "18:00", label: "16h - 18h" },
-];
-
-const DAY_COL_WIDTH = 13;
-
-function toMin(t: string): number {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
+  /** Lundi de la semaine au format ISO YYYY-MM-DD, pour afficher "Lundi 15 septembre". */
+  weekStart?: string;
+  /** Bloc en haut à gauche, ex. "Université Joseph Ki-Zerbo\nCentre universitaire de Kaya (CUK)". */
+  institution?: string;
+  /** Bloc en haut à droite, ex. "2025-2026". */
+  academicYear?: string;
+  footerNote?: string;
 }
 
-function colFor(slot: Slot, cols: Col[]): { index: number; span: number } | null {
-  const s = toMin(slot.start_time);
-  const e = toMin(slot.end_time);
-  let index = -1;
-  let span = 0;
-  for (let i = 0; i < cols.length; i++) {
-    const cs = toMin(cols[i].start);
-    const ce = toMin(cols[i].end);
-    if (s < ce && e > cs) {
-      if (index === -1) index = i;
-      span++;
-    }
-  }
-  return index === -1 ? null : { index, span };
-}
-
-function assignLanes(intervals: { index: number; span: number }[]): number[] {
-  const sorted = intervals
-    .map((it, i) => ({ it, i }))
-    .sort(
-      (a, b) =>
-        a.it.index - b.it.index || (a.it.index + a.it.span) - (b.it.index + b.it.span)
-    );
-  const lanes: number[] = [];
-  const result: number[] = [];
-  for (const { it, i } of sorted) {
-    const endCol = it.index + it.span;
-    let lane = lanes.findIndex((l) => l <= it.index);
-    if (lane === -1) {
-      lane = lanes.length;
-      lanes.push(0);
-    }
-    lanes[lane] = endCol;
-    result[i] = lane;
-  }
-  return result;
-}
-
-export function ExportPdfButton({ slots, className, weekLabel }: ExportPdfButtonProps) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function ExportPdfButton({
+  slots,
+  className,
+  weekLabel,
+  weekStart,
+  institution,
+  academicYear,
+  footerNote = "",
+}: ExportPdfButtonProps) {
+  const resolvedInstitution =
+    institution?.trim() ? institution : DEFAULT_INSTITUTION;
+  const resolvedAcademicYear =
+    academicYear?.trim() ? academicYear : getAcademicYear();
   const [open, setOpen] = useState(false);
-  const [footerNote, setFooterNote] = useState("");
+  const [note, setNote] = useState(footerNote);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleExport = async () => {
-    setPending(true);
+  // Synchro si footerNote prop change après mount (ex. teacher page)
+  // On ne force pas : l'utilisateur édite `note` localement via la modale.
+
+  async function handleExport() {
+    setBusy(true);
     setError(null);
     try {
-      const { Document, Page, Text, View, StyleSheet, pdf } = await import(
-        "@react-pdf/renderer"
-      );
-
-      const colWidth = (100 - DAY_COL_WIDTH) / COLUMNS.length;
-      const bodyColWidth = 100 / COLUMNS.length;
+      const { Document, Page, View, Text, pdf } = await import("@react-pdf/renderer");
 
       const hasSunday = slots.some((s) => s.day_of_week === 6);
-      const days = hasSunday ? [0, 1, 2, 3, 4, 5, 6] : [...GRID_DAYS];
+      const dayIndexes = hasSunday ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5];
+      const colW = (CONTENT_W - TIME_COL_W) / BANDS.length;
 
-      // Hauteur de ligne adaptative pour tenir sur une seule page A4 paysage.
-      const pageHeight = 595;
-      const pagePad = 24;
-      const headerH = 34;
-      const gridHeaderH = 30;
-      const footerH = footerNote.trim() !== "" ? 26 : 0;
-      const availableHeight =
-        pageHeight - pagePad * 2 - headerH - footerH - gridHeaderH;
-      const rowHeight = Math.max(50, Math.floor(availableHeight / days.length));
-
-      const styles = StyleSheet.create({
-        page: {
-          padding: 24,
-          fontFamily: "Helvetica",
-          fontSize: 10,
-        },
-        header: { marginBottom: 16 },
-        title: { fontSize: 17, fontWeight: "bold", marginBottom: 5 },
-        subtitle: { fontSize: 10.5, color: "#555f6f" },
-        grid: { borderWidth: 1, borderColor: "#aeb3b8" },
-        headerRow: {
-          flexDirection: "row",
-          backgroundColor: "#eef0f1",
-          borderBottomWidth: 1,
-          borderBottomColor: "#aeb3b8",
-        },
-        dayHeaderCell: {
-          width: `${DAY_COL_WIDTH}%`,
-          alignItems: "center",
-          paddingVertical: 8,
-        },
-        colHeaderCell: {
-          width: `${colWidth}%`,
-          alignItems: "center",
-          paddingVertical: 8,
-          borderLeftWidth: 1,
-          borderLeftColor: "#aeb3b8",
-        },
-        colHeaderText: { fontSize: 10, fontWeight: "bold" },
-        dayRow: {
-          flexDirection: "row",
-          borderTopWidth: 1,
-          borderTopColor: "#aeb3b8",
-          height: rowHeight,
-        },
-        dayLabelCell: {
-          width: `${DAY_COL_WIDTH}%`,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f7f8f9",
-          paddingHorizontal: 4,
-        },
-        dayLabel: { fontSize: 10.5, fontWeight: "bold" },
-        body: {
-          width: `${100 - DAY_COL_WIDTH}%`,
-          position: "relative",
-          alignSelf: "stretch",
-        },
-        emptyCell: {
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          borderLeftWidth: 1,
-          borderLeftColor: "#aeb3b8",
-          padding: 6,
-        },
-        courseAbs: {
-          position: "absolute",
-          padding: 7,
-          justifyContent: "center",
-        },
-        courseLine: { fontSize: 9.5, fontWeight: "bold", marginBottom: 2 },
-        courseLine2: { fontSize: 9 },
-        footer: {
-          marginTop: 16,
-          color: "#555f6f",
-          fontSize: 9.5,
-        },
+      // Labels "Lundi 15 septembre" si weekStart fourni
+      const weekStartDate = weekStart ? new Date(`${weekStart}T00:00:00`) : null;
+      const validWeekStart = weekStartDate && !Number.isNaN(weekStartDate.getTime()) ? weekStartDate : null;
+      const dayLabels: string[] = dayIndexes.map((d) => {
+        if (!validWeekStart) return DAY_LABELS[d];
+        const dt = new Date(validWeekStart);
+        dt.setDate(validWeekStart.getDate() + d);
+        const month = dt.toLocaleDateString("fr-FR", { month: "long" });
+        return `${DAY_LABELS[d]} ${dt.getDate()} ${month}`;
       });
 
-      const dayLayout = days.map((day) => {
-        const daySlots = slots.filter((s) => s.day_of_week === day);
-        const withCol = daySlots
-          .map((s) => ({ slot: s, col: colFor(s, COLUMNS) }))
-          .filter((x) => x.col) as { slot: Slot; col: { index: number; span: number } }[];
-        const lanes = assignLanes(withCol.map((x) => x.col));
-        const laneCount = Math.max(1, new Set(lanes).size);
-        return withCol.map((x, i) => ({
-          slot: x.slot,
-          ...x.col,
-          lane: lanes[i],
-          laneCount,
-        }));
+      // Transposé : lignes = jours, colonnes = bandes (plus de largeur pour le texte)
+      const cells: Card[][][] = dayIndexes.map(() => BANDS.map(() => []));
+      slots.forEach((slot) => {
+        const dayPos = dayIndexes.indexOf(slot.day_of_week);
+        if (dayPos < 0) return;
+        const b = bandIndexFor(toMin(slot.start_time), toMin(slot.end_time));
+        cells[dayPos][b].push(buildCard(slot));
       });
+      cells.forEach((row) =>
+        row.forEach((list) =>
+          list.sort(
+            (a, b) =>
+              toMin(a.slot.start_time) - toMin(b.slot.start_time) ||
+              a.title.localeCompare(b.title),
+          ),
+        ),
+      );
+
+      const noteText = (note ?? "").trim();
+      const institutionLines = resolvedInstitution
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      // En-tête plus aéré : institution (2 lignes) + titre centré + espace avant grille
+      const GAP_TITLE_GRID = 14;
+      const headerH =
+        8 + Math.max(1, institutionLines.length) * 11 + 10 + 13 + GAP_TITLE_GRID;
+      const THEAD_H = 20;
+
+      const measure = (scale: number) => {
+        const fsTitle = FS_TITLE * scale;
+        const fsMeta = FS_META * scale;
+        const innerW = colW - 10;
+
+        const cardH = (c: Card) => {
+          const titleLines = Math.min(3, linesOf(c.title, innerW, fsTitle));
+          const profLines = c.profs ? Math.min(2, linesOf(c.profs, innerW, fsMeta)) : 0;
+          const timeLines = c.time ? 1 : 0;
+          return (
+            titleLines * fsTitle * 1.25 +
+            profLines * fsMeta * 1.25 +
+            timeLines * fsMeta * 1.25 +
+            5
+          );
+        };
+
+        const noteFs = FS_META * scale;
+        const noteLines = noteText ? Math.min(4, linesOf(noteText, CONTENT_W - 8, noteFs)) : 0;
+        const footerH = noteText ? noteLines * noteFs * 1.35 + 12 : 0;
+
+        const baseRowHeights = cells.map((row) => {
+          const hasContent = row.some((list) => list.length > 0);
+          const tallest = Math.max(
+            0,
+            ...row.map((list) => {
+              const shown = list.slice(0, MAX_PER_CELL);
+              const extra = list.length > MAX_PER_CELL ? fsMeta * 1.25 : 0;
+              return shown.reduce((sum, c) => sum + cardH(c), 0) + extra;
+            }),
+          );
+          const contentH = Math.max(fsTitle * 2.6, tallest) + 14;
+          // Vide = compact, avec cours = plus haut mais pas plein écran
+          if (!hasContent) return 36 * scale;
+          return Math.max(contentH, 54 * scale);
+        });
+
+        const baseTotal = headerH + THEAD_H + baseRowHeights.reduce((a, b) => a + b, 0) + footerH + 6;
+        const slack = Math.max(0, CONTENT_H - baseTotal);
+        // On distribue peu pour garder les lignes vides fines
+        const addPerRow = Math.min(22 * scale, (slack * 0.3) / dayIndexes.length);
+        const rowHeights = baseRowHeights.map((h, i) => {
+          const hasContent = cells[i].some((l) => l.length > 0);
+          return h + (hasContent ? addPerRow : addPerRow * 0.25);
+        });
+
+        const total = headerH + THEAD_H + rowHeights.reduce((a, b) => a + b, 0) + footerH + 6;
+        return { total, rowHeights, fsTitle, fsMeta, noteFs };
+      };
+
+      let scale = 1;
+      let layout = measure(scale);
+      while (layout.total > CONTENT_H && scale > 0.6) {
+        scale = Math.round((scale - 0.02) * 100) / 100;
+        layout = measure(scale);
+      }
+
+      const { rowHeights, fsTitle, fsMeta, noteFs } = layout;
+      const BORDER = INK;
+
+      const CourseText = ({ c, first }: { c: Card; first: boolean }) => (
+        <View style={{ marginTop: first ? 0 : 5 }}>
+          <Text style={{ fontSize: fsTitle, color: c.isDevoir ? RED : INK, lineHeight: 1.25 }}>
+            {c.title}
+          </Text>
+          {c.profs ? (
+            <Text
+              style={{
+                fontSize: fsMeta,
+                color: c.isDevoir ? RED : INK,
+                fontFamily: "Helvetica-Bold",
+                lineHeight: 1.25,
+              }}
+            >
+              {c.profs}
+            </Text>
+          ) : null}
+          {c.time ? (
+            <Text
+              style={{
+                fontSize: fsMeta,
+                color: MUTED,
+                fontFamily: "Helvetica-Oblique",
+                lineHeight: 1.25,
+              }}
+            >
+              ({c.time})
+            </Text>
+          ) : null}
+        </View>
+      );
 
       const doc = (
-        <Document>
-          <Page size="A4" orientation="landscape" style={styles.page}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Emploi du temps — {className}</Text>
-              <Text style={styles.subtitle}>Semaine du {weekLabel}</Text>
-            </View>
-            <View style={styles.grid}>
-              <View style={styles.headerRow}>
-                <View style={styles.dayHeaderCell} />
-                {COLUMNS.map((c) => (
-                  <View key={c.label} style={styles.colHeaderCell}>
-                    <Text style={styles.colHeaderText}>{c.label}</Text>
+        <Document title={`Emploi du temps ${className}`}>
+          <Page
+            size="A4"
+            orientation="landscape"
+            style={{ padding: PAD, fontFamily: "Helvetica", backgroundColor: "#FFFFFF", color: INK }}
+          >
+            <View wrap={false}>
+              <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+                <View style={{ width: "34%" }}>
+                  {institutionLines.map((line, i) => (
+                    <Text key={i} style={{ fontSize: 10, fontFamily: "Helvetica-Bold", lineHeight: 1.2 }}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+                <View style={{ width: "32%" }}>
+                  <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", textAlign: "center" }}>
+                    Semaine du {weekLabel}
+                  </Text>
+                </View>
+                <View style={{ width: "34%" }}>
+                  <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", textAlign: "right" }}>
+                    Année académique {resolvedAcademicYear}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={{ fontSize: 13, textAlign: "center", marginTop: 8, marginBottom: 14 }}>{className}</Text>
+
+              <View style={{ borderWidth: 1, borderColor: BORDER, borderBottomWidth: 0, borderRightWidth: 0 }}>
+                <View style={{ flexDirection: "row" }}>
+                  <View
+                    style={{
+                      width: TIME_COL_W,
+                      borderRightWidth: 1,
+                      borderBottomWidth: 1,
+                      borderColor: BORDER,
+                      paddingVertical: 5,
+                      paddingHorizontal: 4,
+                    }}
+                  >
+                    <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}></Text>
+                  </View>
+                  {BANDS.map((band) => (
+                    <View
+                      key={band.key}
+                      style={{
+                        width: colW,
+                        borderRightWidth: 1,
+                        borderBottomWidth: 1,
+                        borderColor: BORDER,
+                        paddingVertical: 5,
+                        paddingHorizontal: 4,
+                      }}
+                    >
+                      <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}>{band.label}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {dayIndexes.map((d, di) => (
+                  <View key={d} style={{ flexDirection: "row" }}>
+                    <View
+                      style={{
+                        width: TIME_COL_W,
+                        height: rowHeights[di],
+                        borderRightWidth: 1,
+                        borderBottomWidth: 1,
+                        borderColor: BORDER,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        paddingHorizontal: 4,
+                        paddingVertical: 2,
+                        backgroundColor: "#F8FAFC",
+                      }}
+                    >
+                      <Text style={{ fontSize: 8.5, fontFamily: "Helvetica-Bold", textAlign: "center" }}>
+                        {dayLabels[di]}
+                      </Text>
+                    </View>
+                    {cells[di].map((list, bi) => {
+                      const shown = list.slice(0, MAX_PER_CELL);
+                      const extra = list.length - shown.length;
+                      return (
+                        <View
+                          key={bi}
+                          style={{
+                            width: colW,
+                            height: rowHeights[di],
+                            borderRightWidth: 1,
+                            borderBottomWidth: 1,
+                            borderColor: BORDER,
+                            paddingVertical: 4,
+                            paddingHorizontal: 6,
+                            overflow: "hidden",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {shown.map((c, i) => (
+                            <CourseText key={c.slot.id} c={c} first={i === 0} />
+                          ))}
+                          {extra > 0 ? (
+                            <Text style={{ fontSize: fsMeta, color: MUTED }}>
+                              +{extra} autre{extra > 1 ? "s" : ""}
+                            </Text>
+                          ) : null}
+                        </View>
+                      );
+                    })}
                   </View>
                 ))}
               </View>
-              {days.map((day, di) => (
-                <View key={day} style={styles.dayRow}>
-                  <View style={styles.dayLabelCell}>
-                    <Text style={styles.dayLabel}>{formatDayOfWeek(day)}</Text>
-                  </View>
-                  <View style={styles.body}>
-                    {COLUMNS.map((c, ci) => (
-                      <View
-                        key={c.label}
-                        style={[
-                          styles.emptyCell,
-                          {
-                            left: `${ci * bodyColWidth}%`,
-                            width: `${bodyColWidth}%`,
-                          },
-                        ]}
-                      />
-                    ))}
-                    {dayLayout[di].map(({ slot, index, span, lane, laneCount }) => (
-                      <View
-                        key={slot.id}
-                        style={[
-                          styles.courseAbs,
-                          {
-                            left: `${index * bodyColWidth}%`,
-                            width: `${span * bodyColWidth}%`,
-                            top: `${(lane / laneCount) * 100}%`,
-                            height: `${(1 / laneCount) * 100}%`,
-                          },
-                        ]}
-                      >
-                        <Text style={styles.courseLine}>
-                          {courseTypeLabels[slot.type]} — {slot.subject_name}
-                        </Text>
-                        <Text style={styles.courseLine2}>
-                          {slot.professors.map((p) => p.name).join(", ")}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              ))}
+
+              {noteText ? (
+                <Text style={{ marginTop: 8, fontSize: noteFs, color: MUTED, lineHeight: 1.35 }}>{noteText}</Text>
+              ) : null}
             </View>
-            {footerNote.trim() !== "" && (
-              <View style={styles.footer}>
-                <Text>{footerNote}</Text>
-              </View>
-            )}
           </Page>
         </Document>
       );
@@ -255,15 +416,18 @@ export function ExportPdfButton({ slots, className, weekLabel }: ExportPdfButton
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `emploi-du-temps-${className.replace(/\s+/g, "-").toLowerCase()}.pdf`;
+      a.download = `emploi-du-temps-${className}-${weekLabel}`.replace(/[^\w\-]+/g, "-").toLowerCase().concat(".pdf");
+      document.body.appendChild(a);
       a.click();
+      a.remove();
       URL.revokeObjectURL(url);
+      setOpen(false);
     } catch {
       setError("Impossible de générer le PDF.");
     } finally {
-      setPending(false);
+      setBusy(false);
     }
-  };
+  }
 
   const onConfirm = () => {
     setOpen(false);
@@ -276,13 +440,13 @@ export function ExportPdfButton({ slots, className, weekLabel }: ExportPdfButton
       <Button
         variant="secondary"
         onClick={() => {
-          setFooterNote("");
+          setNote(footerNote);
           setOpen(true);
         }}
-        disabled={pending}
+        disabled={busy}
       >
         <Icon name="download" size={16} />
-        {pending ? "Génération…" : "Exporter en PDF"}
+        {busy ? "Génération…" : "Exporter en PDF"}
       </Button>
 
       {open && (
@@ -294,24 +458,27 @@ export function ExportPdfButton({ slots, className, weekLabel }: ExportPdfButton
               <Button variant="secondary" onClick={() => setOpen(false)}>
                 Annuler
               </Button>
-              <Button onClick={onConfirm} disabled={pending}>
-                {pending ? "Génération…" : "Exporter"}
+              <Button onClick={onConfirm} disabled={busy}>
+                {busy ? "Génération…" : "Exporter"}
               </Button>
             </>
           }
         >
           <p className="font-body-sm text-body-sm text-secondary">
-            Vous pouvez ajouter une note qui apparaîtra en bas de l&apos;emploi du
-            temps (laissez vide pour ne pas l&apos;afficher).
+            Elle apparaît sous la grille. Laissez vide pour exporter sans note.
           </p>
           <textarea
-            className="mt-3 w-full min-h-20 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary"
-            placeholder="Les cours se dérouleront..."
-            value={footerNote}
-            onChange={(e) => setFooterNote(e.target.value)}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            maxLength={300}
+            className="mt-3 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary min-h-20"
+            placeholder="Ex. : les TP du jeudi se déroulent en salle informatique 2."
           />
         </Modal>
       )}
     </div>
   );
 }
+
+export default ExportPdfButton;

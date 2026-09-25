@@ -100,6 +100,7 @@ export default async function TeacherDashboard({ searchParams }: Props) {
                 slots={await getSlotsForClass(selectedId)}
                 className={selectedClass?.name ?? ""}
                 weekLabel={formatWeekRange(weekStart)}
+                weekStart={weekStart.toISOString().slice(0, 10)}
               />
             </div>
           </div>

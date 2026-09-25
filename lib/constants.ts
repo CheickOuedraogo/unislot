@@ -42,6 +42,16 @@ export const courseTypeCardClass: Record<CourseType, string> = {
   devoir: "course-card course-type-devoir flex flex-col group",
 };
 
+export const DEFAULT_INSTITUTION =
+  "Université Joseph Ki-Zerbo\nCentre universitaire de Kaya (CUK)";
+
+export function getAcademicYear(date = new Date()): string {
+  const month = date.getMonth(); // 0-11, 9 = octobre
+  const year = date.getFullYear();
+  const start = month >= 9 ? year : year - 1;
+  return `${start}-${start + 1}`;
+}
+
 export const SESSION_COOKIE = "unislot_session";
 export const SESSION_DURATION_DAYS = 30;
 
