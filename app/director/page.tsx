@@ -63,7 +63,13 @@ export default async function DirectorPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Classes" value={stats.classes} icon="groups" accent="tertiary" />
+        <StatCard
+          label="Classes"
+          value={stats.classes}
+          icon="groups"
+          href="/director#classes"
+          accent="tertiary"
+        />
         <StatCard
           label="Enseignants"
           value={stats.teachers}
@@ -132,7 +138,7 @@ export default async function DirectorPage() {
         )}
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section id="classes" className="flex scroll-mt-14 flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
             Classes
