@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   courseTypeBadgeClass,
   courseTypeCardClass,
@@ -39,6 +39,7 @@ type ModalState =
 
 const GRID_START_MIN = START_HOUR * 60;
 const GRID_TOTAL_MIN = (END_HOUR - START_HOUR) * 60;
+const TOOLTIP_MAX_WIDTH = 256;
 
 function courseCard(slot: Slot) {
   return (
@@ -117,6 +118,14 @@ export function TimetableGrid({
   const [hover, setHover] = useState<{ slot: Slot; x: number; y: number } | null>(
     null
   );
+  const [viewportWidth, setViewportWidth] = useState(0);
+
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const weekDays = getWeekDays(new Date(`${weekStart}T00:00:00`));
 
@@ -262,17 +271,20 @@ export function TimetableGrid({
                   <div className="relative h-full">
                     {entries.map(({ slot, lane, laneCount }) => {
                       const editable = canEdit(slot);
+                      const swappable = !editable && !pastDay(slot.day_of_week);
+                      const hasActions = editable || swappable;
                       const style = slotStyle(slot, lane, laneCount);
                       return (
                         <div
                           key={slot.id}
                           className="absolute pointer-events-auto"
                           style={style}
-                          onClick={() =>
+                          onClick={() => {
+                            if (!hasActions) return;
                             setOpenPopover((prev) =>
                               prev === slot.id ? null : slot.id
-                            )
-                          }
+                            );
+                          }}
                           onMouseMove={(e) =>
                             setHover({ slot, x: e.clientX, y: e.clientY })
                           }
@@ -284,7 +296,7 @@ export function TimetableGrid({
                           {courseCard(slot)}
                           {openPopover === slot.id && (
                             <div
-                              className="absolute top-2 left-full ml-2 w-44 bg-surface-container-lowest border border-outline-variant rounded shadow-sm z-50 flex flex-col"
+                              className="fixed inset-x-0 bottom-0 z-50 flex flex-col gap-1 rounded-t-2xl border-t border-outline-variant bg-surface-container-lowest p-2 shadow-lg md:absolute md:inset-x-auto md:bottom-auto md:top-2 md:left-full md:ml-2 md:w-44 md:gap-0 md:rounded md:border md:p-0 md:shadow-sm"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {editable && (
@@ -297,7 +309,7 @@ export function TimetableGrid({
                                   <Icon name="edit" size={16} /> Modifier
                                 </button>
                               )}
-                              {!editable && !pastDay(slot.day_of_week) && (
+                              {swappable && (
                                 <button
                                   className="text-left px-3 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2"
                                   onClick={() =>
@@ -308,7 +320,7 @@ export function TimetableGrid({
                                   un échange
                                 </button>
                               )}
-{editable && (
+                              {editable && (
                               <>
                                 <div className="h-px bg-outline-variant w-full" />
                                 <ConfirmButton
@@ -381,8 +393,14 @@ export function TimetableGrid({
 
       {hover && (
         <div
-          className="fixed z-[90] pointer-events-none bg-on-surface text-surface font-body-sm text-body-sm rounded-lg shadow-lg px-3 py-2 max-w-64"
-          style={{ left: hover.x + 14, top: hover.y + 16 }}
+          className="fixed z-[90] hidden pointer-events-none bg-on-surface text-surface font-body-sm text-body-sm rounded-lg shadow-lg px-3 py-2 max-w-64 md:block"
+          style={{
+            left: Math.min(
+              hover.x + 14,
+              Math.max(16, viewportWidth - TOOLTIP_MAX_WIDTH - 16)
+            ),
+            top: hover.y + 16,
+          }}
         >
           <div className="flex items-center justify-between gap-3 mb-1">
             <span className="font-semibold">{hover.slot.subject_name}</span>

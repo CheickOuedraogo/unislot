@@ -138,7 +138,7 @@ export default async function DirectorPage() {
         )}
       </section>
 
-      <section id="classes" className="flex scroll-mt-14 flex-col gap-4">
+      <section id="classes" className="flex scroll-mt-16 flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
             Classes
