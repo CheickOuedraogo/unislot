@@ -19,6 +19,7 @@ export function DaySelector({
     <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
       <button
         onClick={() => onSelect(null)}
+        aria-label="Toute la semaine"
         className={`flex flex-col items-center justify-center min-w-[56px] py-2 px-1 rounded-xl transition-all shrink-0 ${
           selectedDay === null
             ? "bg-primary text-on-primary shadow-lg shadow-primary/25 scale-105"
@@ -26,9 +27,6 @@ export function DaySelector({
         }`}
       >
         <span className="font-label-caps text-[11px]">Tous</span>
-        <span className="text-[10px] opacity-70 mt-0.5">
-          {weekDays.length}j
-        </span>
       </button>
       {weekDays.map((day, i) => {
         const dayNum = new Date(`${day.iso}T00:00:00`).getDate();
