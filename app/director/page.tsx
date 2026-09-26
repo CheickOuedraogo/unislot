@@ -62,27 +62,14 @@ export default async function DirectorPage() {
         </p>
       </section>
 
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label="Classes" value={stats.classes} icon="groups" accent="tertiary" />
         <StatCard
           label="Enseignants"
           value={stats.teachers}
           icon="school"
           href="/director/teachers"
           accent="primary"
-        />
-        <StatCard
-          label="Classes"
-          value={stats.classes}
-          icon="groups"
-          href="/director"
-          accent="tertiary"
-        />
-        <StatCard
-          label="Matières"
-          value={stats.subjects}
-          icon="menu_book"
-          href="/director"
-          accent="error"
         />
         <StatCard
           label="Demandes en attente"

@@ -198,18 +198,15 @@ export async function getClassesWithStats(): Promise<ClassWithStats[]> {
 export async function getDirectorStats(): Promise<{
   teachers: number;
   classes: number;
-  subjects: number;
 }> {
   const { rows } = await db.query(
     `SELECT
        (SELECT count(*) FROM users WHERE role = 'teacher') AS teachers,
-       (SELECT count(*) FROM classes) AS classes,
-       (SELECT count(*) FROM subjects) AS subjects`
+       (SELECT count(*) FROM classes) AS classes`
   );
   return {
     teachers: Number(rows[0].teachers),
     classes: Number(rows[0].classes),
-    subjects: Number(rows[0].subjects),
   };
 }
 

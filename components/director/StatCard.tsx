@@ -51,8 +51,9 @@ export function StatCard({
     </>
   );
 
-  const cardClass =
-    "p-5 transition-all duration-150 hover:border-primary hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]";
+  const cardClass = href
+    ? "cursor-pointer p-5 transition-all duration-150 hover:border-primary hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
+    : "p-5";
 
   if (href) {
     return (
