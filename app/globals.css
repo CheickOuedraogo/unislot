@@ -200,15 +200,14 @@ a {
 
 .timetable-grid {
   display: grid;
-  /* 1 colonne heures + 6 jours (= GRID_DAYS.length) ; 1 rangée auto + 13 h 80px (= hours.length) */
-  grid-template-columns: 60px repeat(6, 1fr);
+  grid-template-columns: 60px repeat(7, 1fr);
   grid-template-rows: auto repeat(13, 80px);
   column-gap: 1px;
   row-gap: 0;
   background-color: var(--color-surface-container-low);
 }
 .timetable-grid-single {
-  grid-template-columns: 60px repeat(6, 1fr);
+  grid-template-columns: 60px repeat(7, 1fr);
 }
 /* Mode "un seul jour" (mobile uniquement) */
 @media (max-width: 767px) {

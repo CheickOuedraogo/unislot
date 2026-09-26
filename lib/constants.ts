@@ -11,7 +11,7 @@ export const DAY_LABELS_FULL = [
   "Dimanche",
 ] as const;
 
-export const GRID_DAYS = [0, 1, 2, 3, 4, 5] as const;
+export const GRID_DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 export const START_HOUR = 7;
 export const END_HOUR = 20;

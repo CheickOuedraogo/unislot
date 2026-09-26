@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Button } from "@/components/ui/ActionButton";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
@@ -155,7 +155,7 @@ export function ExportPdfButton({
 
       const hasSunday = slots.some((s) => s.day_of_week === 6);
       const dayIndexes = hasSunday ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5];
-      const colW = (CONTENT_W - TIME_COL_W) / BANDS.length;
+      const colW = (CONTENT_W - TIME_COL_W) / dayIndexes.length;
 
       // Labels "Lundi 15 septembre" si weekStart fourni
       const weekStartDate = weekStart ? new Date(`${weekStart}T00:00:00`) : null;
@@ -168,13 +168,12 @@ export function ExportPdfButton({
         return `${DAY_LABELS[d]} ${dt.getDate()} ${month}`;
       });
 
-      // Transposé : lignes = jours, colonnes = bandes (plus de largeur pour le texte)
-      const cells: Card[][][] = dayIndexes.map(() => BANDS.map(() => []));
+      const cells: Card[][][] = BANDS.map(() => dayIndexes.map(() => []));
       slots.forEach((slot) => {
         const dayPos = dayIndexes.indexOf(slot.day_of_week);
         if (dayPos < 0) return;
-        const b = bandIndexFor(toMin(slot.start_time), toMin(slot.end_time));
-        cells[dayPos][b].push(buildCard(slot));
+        const band = bandIndexFor(toMin(slot.start_time), toMin(slot.end_time));
+        cells[band][dayPos].push(buildCard(slot));
       });
       cells.forEach((row) =>
         row.forEach((list) =>
@@ -196,7 +195,7 @@ export function ExportPdfButton({
       const GAP_TITLE_GRID = 14;
       const headerH =
         8 + Math.max(1, institutionLines.length) * 11 + 10 + 13 + GAP_TITLE_GRID;
-      const THEAD_H = 20;
+      const THEAD_H = 30;
 
       const measure = (scale: number) => {
         const fsTitle = FS_TITLE * scale;
@@ -226,25 +225,27 @@ export function ExportPdfButton({
             ...row.map((list) => {
               const shown = list.slice(0, MAX_PER_CELL);
               const extra = list.length > MAX_PER_CELL ? fsMeta * 1.25 : 0;
-              return shown.reduce((sum, c) => sum + cardH(c), 0) + extra;
+              const separators = Math.max(0, shown.length - 1) * 9;
+              return shown.reduce((sum, c) => sum + cardH(c), 0) + extra + separators;
             }),
           );
           const contentH = Math.max(fsTitle * 2.6, tallest) + 14;
-          // Vide = compact, avec cours = plus haut mais pas plein écran
           if (!hasContent) return 36 * scale;
           return Math.max(contentH, 54 * scale);
         });
 
-        const baseTotal = headerH + THEAD_H + baseRowHeights.reduce((a, b) => a + b, 0) + footerH + 6;
-        const slack = Math.max(0, CONTENT_H - baseTotal);
-        // On distribue peu pour garder les lignes vides fines
-        const addPerRow = Math.min(22 * scale, (slack * 0.3) / dayIndexes.length);
-        const rowHeights = baseRowHeights.map((h, i) => {
-          const hasContent = cells[i].some((l) => l.length > 0);
-          return h + (hasContent ? addPerRow : addPerRow * 0.25);
-        });
-
-        const total = headerH + THEAD_H + rowHeights.reduce((a, b) => a + b, 0) + footerH + 6;
+        const availableRowsH = Math.max(
+          0,
+          CONTENT_H - headerH - THEAD_H - footerH - 6,
+        );
+        const baseRowsH = baseRowHeights.reduce((sum, height) => sum + height, 0);
+        const addPerRow = Math.max(
+          0,
+          (availableRowsH - baseRowsH) / cells.length,
+        );
+        const rowHeights = baseRowHeights.map((height) => height + addPerRow);
+        const total =
+          headerH + THEAD_H + rowHeights.reduce((sum, height) => sum + height, 0) + footerH + 6;
         return { total, rowHeights, fsTitle, fsMeta, noteFs };
       };
 
@@ -258,8 +259,8 @@ export function ExportPdfButton({
       const { rowHeights, fsTitle, fsMeta, noteFs } = layout;
       const BORDER = INK;
 
-      const CourseText = ({ c, first }: { c: Card; first: boolean }) => (
-        <View style={{ marginTop: first ? 0 : 5 }}>
+      const CourseText = ({ c }: { c: Card }) => (
+        <View>
           <Text style={{ fontSize: fsTitle, color: c.isDevoir ? RED : INK, lineHeight: 1.25 }}>
             {c.title}
           </Text>
@@ -325,6 +326,7 @@ export function ExportPdfButton({
                   <View
                     style={{
                       width: TIME_COL_W,
+                      height: THEAD_H,
                       borderRightWidth: 1,
                       borderBottomWidth: 1,
                       borderColor: BORDER,
@@ -334,29 +336,41 @@ export function ExportPdfButton({
                   >
                     <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}></Text>
                   </View>
-                  {BANDS.map((band) => (
+                  {dayIndexes.map((day, dayIndex) => (
                     <View
-                      key={band.key}
+                      key={day}
                       style={{
                         width: colW,
+                        height: THEAD_H,
                         borderRightWidth: 1,
                         borderBottomWidth: 1,
                         borderColor: BORDER,
-                        paddingVertical: 5,
-                        paddingHorizontal: 4,
+                        paddingVertical: 4,
+                        paddingHorizontal: 3,
+                        justifyContent: "center",
+                        overflow: "hidden",
                       }}
                     >
-                      <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}>{band.label}</Text>
+                      <Text
+                        style={{
+                          fontSize: 8.5,
+                          fontFamily: "Helvetica-Bold",
+                          textAlign: "center",
+                          lineHeight: 1.1,
+                        }}
+                      >
+                        {dayLabels[dayIndex]}
+                      </Text>
                     </View>
                   ))}
                 </View>
 
-                {dayIndexes.map((d, di) => (
-                  <View key={d} style={{ flexDirection: "row" }}>
+                {BANDS.map((band, bandIndex) => (
+                  <View key={band.key} style={{ flexDirection: "row" }}>
                     <View
                       style={{
                         width: TIME_COL_W,
-                        height: rowHeights[di],
+                        height: rowHeights[bandIndex],
                         borderRightWidth: 1,
                         borderBottomWidth: 1,
                         borderColor: BORDER,
@@ -368,18 +382,19 @@ export function ExportPdfButton({
                       }}
                     >
                       <Text style={{ fontSize: 8.5, fontFamily: "Helvetica-Bold", textAlign: "center" }}>
-                        {dayLabels[di]}
+                        {band.label}
                       </Text>
                     </View>
-                    {cells[di].map((list, bi) => {
+                    {dayIndexes.map((day, dayIndex) => {
+                      const list = cells[bandIndex][dayIndex];
                       const shown = list.slice(0, MAX_PER_CELL);
                       const extra = list.length - shown.length;
                       return (
                         <View
-                          key={bi}
+                          key={day}
                           style={{
                             width: colW,
-                            height: rowHeights[di],
+                            height: rowHeights[bandIndex],
                             borderRightWidth: 1,
                             borderBottomWidth: 1,
                             borderColor: BORDER,
@@ -389,11 +404,23 @@ export function ExportPdfButton({
                             justifyContent: "center",
                           }}
                         >
-                          {shown.map((c, i) => (
-                            <CourseText key={c.slot.id} c={c} first={i === 0} />
+                          {shown.map((c, courseIndex) => (
+                            <Fragment key={c.slot.id}>
+                              {courseIndex > 0 ? (
+                                <View
+                                  style={{
+                                    borderTopWidth: 0.5,
+                                    borderTopColor: "#D1D5DB",
+                                    marginTop: 5,
+                                    marginBottom: 4,
+                                  }}
+                                />
+                              ) : null}
+                              <CourseText c={c} />
+                            </Fragment>
                           ))}
                           {extra > 0 ? (
-                            <Text style={{ fontSize: fsMeta, color: MUTED }}>
+                            <Text style={{ fontSize: fsMeta, color: MUTED, marginTop: shown.length > 0 ? 4 : 0 }}>
                               +{extra} autre{extra > 1 ? "s" : ""}
                             </Text>
                           ) : null}

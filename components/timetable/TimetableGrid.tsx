@@ -118,7 +118,7 @@ export function TimetableGrid({
     null
   );
 
-  const weekDays = getWeekDays(new Date(`${weekStart}T00:00:00`)).slice(0, 6);
+  const weekDays = getWeekDays(new Date(`${weekStart}T00:00:00`));
 
   const canEdit = (slot: Slot) =>
     user.role === "director" || slot.creator_teacher_id === user.id;
@@ -152,7 +152,7 @@ export function TimetableGrid({
 
   return (
     <div className="p-4 flex-1 overflow-x-auto overflow-y-auto">
-      <div className={`${selectedDay !== null ? "min-w-0 md:min-w-[720px]" : "min-w-[720px]"} max-w-container-max mx-auto bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden`}>
+      <div className={`${selectedDay !== null ? "min-w-0 md:min-w-[840px]" : "min-w-[840px]"} max-w-container-max mx-auto bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden`}>
         <div className={`timetable-grid ${selectedDay !== null ? "timetable-grid-single" : ""}`}>
           <div
             className="bg-surface border-b border-r border-outline-variant"
@@ -254,7 +254,10 @@ export function TimetableGrid({
                         : "day-overlay-col"
                       : ""
                   }`}
-                  style={{ left: `${col * (100 / 6)}%`, width: `${100 / 6}%` }}
+                  style={{
+                    left: `${col * (100 / GRID_DAYS.length)}%`,
+                    width: `${100 / GRID_DAYS.length}%`,
+                  }}
                 >
                   <div className="relative h-full">
                     {entries.map(({ slot, lane, laneCount }) => {

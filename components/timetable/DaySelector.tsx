@@ -13,7 +13,7 @@ export function DaySelector({
   selectedDay,
   onSelect,
 }: DaySelectorProps) {
-  const weekDays = getWeekDays(new Date(`${weekStart}T00:00:00`)).slice(0, 6);
+  const weekDays = getWeekDays(new Date(`${weekStart}T00:00:00`));
 
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">

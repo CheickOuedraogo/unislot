@@ -52,7 +52,7 @@ export function parseWeekStart(week?: string): Date {
 
 export function formatWeekRange(weekStart: Date): string {
   const end = new Date(weekStart);
-  end.setDate(weekStart.getDate() + 5);
+  end.setDate(weekStart.getDate() + 6);
   const fmt = (d: Date) => formatDateLabel(d);
   return `${fmt(weekStart)} - ${fmt(end)}`;
 }
